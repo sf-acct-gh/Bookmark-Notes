@@ -33,17 +33,22 @@
 	 * Values are sourced from the Skeleton "cerberus" palette above, so
 	 * changing a color later is usually a one-line edit here.
 	 */
-	--border: light-dark(var(--color-surface-900), var(--color-surface-300));
+	/* Subtle, low-emphasis borders (Skeleton-style hairlines) rather than
+	   near-black/white outlines. */
+	--border: light-dark(var(--color-surface-200), var(--color-surface-800));
 	--divider: light-dark(var(--color-surface-200), var(--color-surface-800));
 	--bg: light-dark(var(--color-surface-50), var(--color-surface-950));
 	--bg-muted: light-dark(var(--color-surface-100), var(--color-surface-900));
 	--header-bg: light-dark(var(--color-surface-100), var(--color-surface-800));
-	--tab-active-bg: var(--bg);
+	--tab-active-bg: color-mix(in oklab, var(--accent) 16%, var(--bg));
 	--tab-inactive-bg: light-dark(var(--color-surface-200), var(--color-surface-800));
 	--text: light-dark(var(--color-surface-950), var(--color-surface-50));
 	--text-muted: light-dark(var(--color-surface-600), var(--color-surface-400));
+	/* URL text specifically — its own token so it can be tuned without
+	   affecting other muted text (tab labels, empty-state copy, etc). */
+	--url-text: light-dark(var(--color-surface-600), var(--color-surface-300));
 
-	/* Accent — used for links and the active-tab indicator; adapts per mode. */
+	/* Accent — used for links and the active-tab background; adapts per mode. */
 	--accent: light-dark(var(--color-primary-600), var(--color-primary-400));
 	/* Button accent is fixed across modes so white button text always has
 	   reliable contrast, rather than following the lighter dark-mode accent. */

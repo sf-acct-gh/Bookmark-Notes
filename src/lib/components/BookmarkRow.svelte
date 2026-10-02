@@ -89,8 +89,8 @@
 	}
 
 	.bookmark-url {
-		font-size: 0.85rem;
-		color: var(--text-muted);
+		font-size: 0.95rem;
+		color: var(--url-text);
 		overflow-wrap: anywhere;
 	}
 

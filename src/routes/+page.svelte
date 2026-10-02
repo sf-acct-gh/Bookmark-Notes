@@ -80,7 +80,7 @@
 	// Rough height estimate (px) used only to decide which column a section
 	// goes in — doesn't need to be pixel-perfect, just consistent enough to
 	// approximate a "shortest column" masonry packing.
-	const TILE_HEADER_HEIGHT = 57;
+	const TILE_HEADER_HEIGHT = 46;
 	const BOOKMARK_ROW_HEIGHT = 65;
 	const EMPTY_BODY_HEIGHT = 45;
 	const TILE_SPACING = 16;

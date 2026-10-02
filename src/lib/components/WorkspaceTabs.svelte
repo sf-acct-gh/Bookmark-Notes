@@ -69,12 +69,11 @@
 		border-radius: var(--radius) var(--radius) 0 0;
 		background: var(--tab-inactive-bg);
 		padding: 0.1rem 0.1rem 0.1rem 0.25rem;
-		box-shadow: inset 0 -2px 0 transparent;
 	}
 
 	.tab-group.active {
 		background: var(--tab-active-bg);
-		box-shadow: inset 0 -2px 0 var(--accent);
+		border-color: var(--accent);
 	}
 
 	.tab {
