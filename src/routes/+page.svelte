@@ -19,6 +19,11 @@
 	import PromptModal from '../lib/components/PromptModal.svelte';
 	import SettingsFooter from '../lib/components/SettingsFooter.svelte';
 
+	interface VisibleSection {
+		section: Section;
+		bookmarks: Bookmark[];
+	}
+
 	let board = $state<BookmarkData>({ workspaces: [] });
 	let loaded = $state(false);
 	let searchQuery = $state('');
@@ -46,6 +51,8 @@
 		board.workspaces.find((w) => w.id === $activeWorkspaceId) ?? board.workspaces[0]
 	);
 
+	let columnCount = $state(2);
+
 	onMount(() => {
 		const source = new EventSource('/api/stream');
 		source.onmessage = (event) => {
@@ -55,6 +62,30 @@
 		return () => source.close();
 	});
 
+	onMount(() => {
+		const mq = window.matchMedia('(max-width: 720px)');
+		const update = () => {
+			columnCount = mq.matches ? 1 : 2;
+		};
+		update();
+		mq.addEventListener('change', update);
+		return () => mq.removeEventListener('change', update);
+	});
+
+	// Rough height estimate (px) used only to decide which column a section
+	// goes in — doesn't need to be pixel-perfect, just consistent enough to
+	// approximate a "shortest column" masonry packing.
+	const TILE_HEADER_HEIGHT = 57;
+	const BOOKMARK_ROW_HEIGHT = 65;
+	const EMPTY_BODY_HEIGHT = 45;
+	const TILE_SPACING = 16;
+
+	function estimateSectionHeight(bookmarkCount: number, collapsed: boolean): number {
+		if (collapsed) return TILE_HEADER_HEIGHT + TILE_SPACING;
+		const bodyHeight = bookmarkCount === 0 ? EMPTY_BODY_HEIGHT : bookmarkCount * BOOKMARK_ROW_HEIGHT;
+		return TILE_HEADER_HEIGHT + bodyHeight + TILE_SPACING;
+	}
+
 	function bookmarkMatches(bookmark: Bookmark, fields: SearchFields, text: string): boolean {
 		return (
 			(fields.name && bookmark.name.toLowerCase().includes(text)) ||
@@ -63,7 +94,7 @@
 		);
 	}
 
-	const visibleSections = $derived.by(() => {
+	const visibleSections: VisibleSection[] = $derived.by(() => {
 		const workspace = currentWorkspace;
 		if (!workspace) return [];
 		const fields = $preferences.searchFields;
@@ -77,6 +108,26 @@
 					: section.bookmarks
 			}))
 			.filter(({ bookmarks }) => !active || bookmarks.length > 0);
+	});
+
+	// Greedy "shortest column" packing: each section goes into whichever
+	// column currently has the least estimated content, so a short column
+	// gets filled before starting a new row — no CSS-grid style gaps.
+	const columns: VisibleSection[][] = $derived.by(() => {
+		const cols: VisibleSection[][] = Array.from({ length: columnCount }, () => []);
+		const heights = Array(columnCount).fill(0);
+		for (const item of visibleSections) {
+			let targetIndex = 0;
+			for (let i = 1; i < columnCount; i++) {
+				if (heights[i] < heights[targetIndex]) targetIndex = i;
+			}
+			cols[targetIndex].push(item);
+			heights[targetIndex] += estimateSectionHeight(
+				item.bookmarks.length,
+				$collapsedSections.has(item.section.id)
+			);
+		}
+		return cols;
 	});
 
 	function handleSearchFieldsChange(fields: SearchFields) {
@@ -310,28 +361,32 @@
 			onNewSection={openCreateSection}
 		/>
 
-		<div class="section-grid">
-			{#each visibleSections as { section, bookmarks } (section.id)}
-				<SectionTile
-					{section}
-					{bookmarks}
-					collapsed={$collapsedSections.has(section.id)}
-					linkTarget={$preferences.linkTarget}
-					onToggleCollapse={() => collapsedSections.toggle(section.id)}
-					onRename={() => openRenameSection(section)}
-					onDeleteRequest={() => requestDeleteSection(section)}
-					onAddBookmark={() => openAddBookmark(section.id)}
-					onEditBookmark={(bookmark) => openEditBookmark(bookmark, section.id)}
-					onDeleteBookmark={requestDeleteBookmark}
-				/>
-			{/each}
-
-			{#if currentWorkspace.sections.length === 0}
-				<p class="empty-state">
-					No sections yet in "{currentWorkspace.name}". Create one to start adding bookmarks.
-				</p>
-			{/if}
-		</div>
+		{#if currentWorkspace.sections.length === 0}
+			<p class="empty-state">
+				No sections yet in "{currentWorkspace.name}". Create one to start adding bookmarks.
+			</p>
+		{:else}
+			<div class="section-grid">
+				{#each columns as column, colIndex (colIndex)}
+					<div class="section-column">
+						{#each column as { section, bookmarks } (section.id)}
+							<SectionTile
+								{section}
+								{bookmarks}
+								collapsed={$collapsedSections.has(section.id)}
+								linkTarget={$preferences.linkTarget}
+								onToggleCollapse={() => collapsedSections.toggle(section.id)}
+								onRename={() => openRenameSection(section)}
+								onDeleteRequest={() => requestDeleteSection(section)}
+								onAddBookmark={() => openAddBookmark(section.id)}
+								onEditBookmark={(bookmark) => openEditBookmark(bookmark, section.id)}
+								onDeleteBookmark={requestDeleteBookmark}
+							/>
+						{/each}
+					</div>
+				{/each}
+			</div>
+		{/if}
 
 		<SettingsFooter
 			linkTarget={$preferences.linkTarget}
@@ -445,19 +500,21 @@
 	}
 
 	.section-grid {
-		columns: 2;
-		column-gap: 1rem;
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
 		margin-top: 1rem;
 	}
 
-	@media (max-width: 720px) {
-		.section-grid {
-			columns: 1;
-		}
+	.section-column {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
 	}
 
 	.empty-state {
-		column-span: all;
 		color: var(--text-muted);
 		font-style: italic;
 	}

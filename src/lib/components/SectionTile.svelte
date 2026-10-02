@@ -83,8 +83,6 @@
 		background: var(--bg);
 		display: flex;
 		flex-direction: column;
-		break-inside: avoid;
-		margin-bottom: 1rem;
 	}
 
 	.tile-header {

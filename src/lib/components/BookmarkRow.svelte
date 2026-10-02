@@ -12,6 +12,7 @@
 	let { bookmark, linkTarget, onEdit, onDelete }: Props = $props();
 
 	const target = $derived(linkTarget === 'new' ? '_blank' : '_self');
+	const hasNotes = $derived(bookmark.notes.trim().length > 0);
 </script>
 
 <div class="bookmark-row">
@@ -24,6 +25,12 @@
 		</a>
 	</div>
 	<div class="bookmark-actions">
+		<span
+			class="notes-dot"
+			class:hidden-dot={!hasNotes}
+			title={hasNotes ? 'Has notes' : undefined}
+			aria-hidden="true"
+		></span>
 		<button
 			class="icon-button"
 			title="View/edit notes"
@@ -89,7 +96,23 @@
 
 	.bookmark-actions {
 		display: flex;
+		align-items: center;
 		gap: 0.4rem;
 		flex-shrink: 0;
+	}
+
+	.notes-dot {
+		display: inline-block;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--text);
+		flex-shrink: 0;
+	}
+
+	/* Space is always reserved (visibility, not display) so buttons line up
+	   at the same position whether or not a given bookmark has notes. */
+	.notes-dot.hidden-dot {
+		visibility: hidden;
 	}
 </style>

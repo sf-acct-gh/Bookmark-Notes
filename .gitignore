@@ -22,6 +22,8 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Real bookmark data — personal data, never commit. See data/bookmarks.example.json.
-/data/bookmarks.json
-/data/*.tmp
+# Real bookmark data — personal data, never commit. Only the example file
+# should ever be tracked, regardless of what any real/backup file is named
+# (e.g. downloaded backups, bookmarks-backup1.json, etc).
+/data/*
+!/data/bookmarks.example.json
