@@ -1,5 +1,9 @@
 import { json } from '@sveltejs/kit';
-import { addBookmark, findDuplicateUrl, ValidationError } from '../../../../../lib/server/store';
+import {
+	addBookmark,
+	findDuplicateUrl,
+	ValidationError
+} from '../../../../../../../lib/server/store';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ params, request }) => {
@@ -7,12 +11,12 @@ export const POST: RequestHandler = async ({ params, request }) => {
 	const url = String(body.url ?? '');
 
 	if (!body.allowDuplicate) {
-		const duplicate = await findDuplicateUrl(url);
+		const duplicate = await findDuplicateUrl(params.workspaceId, url);
 		if (duplicate) return json({ duplicate }, { status: 409 });
 	}
 
 	try {
-		const bookmark = await addBookmark(params.id, {
+		const bookmark = await addBookmark(params.workspaceId, params.id, {
 			name: String(body.name ?? ''),
 			url,
 			notes: body.notes ? String(body.notes) : ''

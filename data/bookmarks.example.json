@@ -1,20 +1,26 @@
 {
-	"sections": [
+	"workspaces": [
 		{
-			"id": "b1a1f2d0-0000-4000-8000-000000000001",
-			"name": "Sports links",
-			"bookmarks": [
+			"id": "b1a1f2d0-0000-4000-8000-000000000000",
+			"name": "Default",
+			"sections": [
 				{
-					"id": "b1a1f2d0-0000-4000-8000-000000000002",
-					"name": "ESPN",
-					"url": "https://www.espn.com",
-					"notes": ""
-				},
-				{
-					"id": "b1a1f2d0-0000-4000-8000-000000000003",
-					"name": "Sports.com",
-					"url": "https://www.sports.com",
-					"notes": ""
+					"id": "b1a1f2d0-0000-4000-8000-000000000001",
+					"name": "Sports links",
+					"bookmarks": [
+						{
+							"id": "b1a1f2d0-0000-4000-8000-000000000002",
+							"name": "ESPN",
+							"url": "https://www.espn.com",
+							"notes": ""
+						},
+						{
+							"id": "b1a1f2d0-0000-4000-8000-000000000003",
+							"name": "Sports.com",
+							"url": "https://www.sports.com",
+							"notes": ""
+						}
+					]
 				}
 			]
 		}

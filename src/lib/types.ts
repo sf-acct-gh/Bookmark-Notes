@@ -11,8 +11,14 @@ export interface Section {
 	bookmarks: Bookmark[];
 }
 
-export interface BookmarkData {
+export interface Workspace {
+	id: string;
+	name: string;
 	sections: Section[];
+}
+
+export interface BookmarkData {
+	workspaces: Workspace[];
 }
 
 export interface DuplicateUrlMatch {

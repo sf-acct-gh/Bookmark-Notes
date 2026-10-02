@@ -1,8 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Bookmark, BookmarkData, BookmarkFormValue, DuplicateUrlMatch, Section } from '../lib/types';
+	import type {
+		Bookmark,
+		BookmarkData,
+		BookmarkFormValue,
+		DuplicateUrlMatch,
+		Section,
+		Workspace
+	} from '../lib/types';
 	import { preferences, type SearchFields, type LinkTarget } from '../lib/stores/preferences';
 	import { collapsedSections } from '../lib/stores/collapsed';
+	import { activeWorkspaceId } from '../lib/stores/activeWorkspace';
+	import WorkspaceTabs from '../lib/components/WorkspaceTabs.svelte';
 	import Header from '../lib/components/Header.svelte';
 	import SectionTile from '../lib/components/SectionTile.svelte';
 	import BookmarkModal from '../lib/components/BookmarkModal.svelte';
@@ -10,7 +19,7 @@
 	import PromptModal from '../lib/components/PromptModal.svelte';
 	import SettingsFooter from '../lib/components/SettingsFooter.svelte';
 
-	let board = $state<BookmarkData>({ sections: [] });
+	let board = $state<BookmarkData>({ workspaces: [] });
 	let loaded = $state(false);
 	let searchQuery = $state('');
 
@@ -24,9 +33,18 @@
 	let sectionPrompt = $state<{ mode: 'create' | 'rename'; section?: Section } | null>(null);
 	let sectionPromptError = $state('');
 
+	// Workspace create/rename prompt
+	let workspacePrompt = $state<{ mode: 'create' | 'rename'; workspace?: Workspace } | null>(null);
+	let workspacePromptError = $state('');
+
 	// Delete confirmations
 	let sectionToDelete = $state<Section | null>(null);
 	let bookmarkToDelete = $state<Bookmark | null>(null);
+	let workspaceToDelete = $state<Workspace | null>(null);
+
+	const currentWorkspace = $derived(
+		board.workspaces.find((w) => w.id === $activeWorkspaceId) ?? board.workspaces[0]
+	);
 
 	onMount(() => {
 		const source = new EventSource('/api/stream');
@@ -46,10 +64,12 @@
 	}
 
 	const visibleSections = $derived.by(() => {
+		const workspace = currentWorkspace;
+		if (!workspace) return [];
 		const fields = $preferences.searchFields;
 		const text = searchQuery.trim().toLowerCase();
 		const active = text.length >= 3;
-		return board.sections
+		return workspace.sections
 			.map((section) => ({
 				section,
 				bookmarks: active
@@ -68,18 +88,73 @@
 	}
 
 	function expandAll() {
+		if (!currentWorkspace) return;
 		collapsedSections.setAll(
-			board.sections.map((s) => s.id),
+			currentWorkspace.sections.map((s) => s.id),
 			false
 		);
 	}
 
 	function collapseAll() {
+		if (!currentWorkspace) return;
 		collapsedSections.setAll(
-			board.sections.map((s) => s.id),
+			currentWorkspace.sections.map((s) => s.id),
 			true
 		);
 	}
+
+	// --- Workspaces ---
+
+	function selectWorkspace(id: string) {
+		activeWorkspaceId.set(id);
+	}
+
+	function openCreateWorkspace() {
+		workspacePromptError = '';
+		workspacePrompt = { mode: 'create' };
+	}
+
+	function openRenameWorkspace(workspace: Workspace) {
+		workspacePromptError = '';
+		workspacePrompt = { mode: 'rename', workspace };
+	}
+
+	async function submitWorkspacePrompt(name: string) {
+		workspacePromptError = '';
+		const isCreate = workspacePrompt?.mode === 'create';
+		const url = isCreate ? '/api/workspaces' : `/api/workspaces/${workspacePrompt!.workspace!.id}`;
+		const method = isCreate ? 'POST' : 'PATCH';
+		const res = await fetch(url, {
+			method,
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ name })
+		});
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			workspacePromptError = body.error ?? 'Something went wrong';
+			return;
+		}
+		if (isCreate) {
+			const created = await res.json();
+			activeWorkspaceId.set(created.id);
+		}
+		workspacePrompt = null;
+	}
+
+	function requestDeleteWorkspace(workspace: Workspace) {
+		workspaceToDelete = workspace;
+	}
+
+	async function confirmDeleteWorkspace() {
+		if (!workspaceToDelete) return;
+		await fetch(`/api/workspaces/${workspaceToDelete.id}`, {
+			method: 'DELETE',
+			headers: { 'content-type': 'application/json' }
+		});
+		workspaceToDelete = null;
+	}
+
+	// --- Sections ---
 
 	function openCreateSection() {
 		sectionPromptError = '';
@@ -93,8 +168,10 @@
 
 	async function submitSectionPrompt(name: string) {
 		sectionPromptError = '';
+		if (!currentWorkspace) return;
 		const isCreate = sectionPrompt?.mode === 'create';
-		const url = isCreate ? '/api/sections' : `/api/sections/${sectionPrompt!.section!.id}`;
+		const base = `/api/workspaces/${currentWorkspace.id}/sections`;
+		const url = isCreate ? base : `${base}/${sectionPrompt!.section!.id}`;
 		const method = isCreate ? 'POST' : 'PATCH';
 		const res = await fetch(url, {
 			method,
@@ -114,13 +191,15 @@
 	}
 
 	async function confirmDeleteSection() {
-		if (!sectionToDelete) return;
-		await fetch(`/api/sections/${sectionToDelete.id}`, {
+		if (!sectionToDelete || !currentWorkspace) return;
+		await fetch(`/api/workspaces/${currentWorkspace.id}/sections/${sectionToDelete.id}`, {
 			method: 'DELETE',
 			headers: { 'content-type': 'application/json' }
 		});
 		sectionToDelete = null;
 	}
+
+	// --- Bookmarks ---
 
 	function requestDeleteBookmark(bookmark: Bookmark) {
 		bookmarkToDelete = bookmark;
@@ -149,10 +228,11 @@
 		payload: BookmarkFormValue,
 		allowDuplicate: boolean
 	): Promise<{ ok: true } | { ok: false; error?: string; duplicate?: DuplicateUrlMatch }> {
+		if (!currentWorkspace) return { ok: false, error: 'No workspace selected' };
 		const isNew = !editingBookmark?.bookmark;
 		const body = { ...payload, allowDuplicate };
 		const endpoint = isNew
-			? `/api/sections/${payload.sectionId}/bookmarks`
+			? `/api/workspaces/${currentWorkspace.id}/sections/${payload.sectionId}/bookmarks`
 			: `/api/bookmarks/${editingBookmark!.bookmark!.id}`;
 		const method = isNew ? 'POST' : 'PATCH';
 
@@ -211,39 +291,57 @@
 <main>
 	<h1>Bookmark Notes</h1>
 
-	<Header
-		bind:searchQuery
-		searchFields={$preferences.searchFields}
-		onSearchFieldsChange={handleSearchFieldsChange}
-		onExpandAll={expandAll}
-		onCollapseAll={collapseAll}
-		onNewSection={openCreateSection}
-	/>
+	{#if loaded && currentWorkspace}
+		<WorkspaceTabs
+			workspaces={board.workspaces}
+			activeId={currentWorkspace.id}
+			onSelect={selectWorkspace}
+			onCreate={openCreateWorkspace}
+			onRename={openRenameWorkspace}
+			onDeleteRequest={requestDeleteWorkspace}
+		/>
 
-	<div class="section-grid">
-		{#each visibleSections as { section, bookmarks } (section.id)}
-			<SectionTile
-				{section}
-				{bookmarks}
-				collapsed={$collapsedSections.has(section.id)}
-				linkTarget={$preferences.linkTarget}
-				onToggleCollapse={() => collapsedSections.toggle(section.id)}
-				onRename={() => openRenameSection(section)}
-				onDeleteRequest={() => requestDeleteSection(section)}
-				onAddBookmark={() => openAddBookmark(section.id)}
-				onEditBookmark={(bookmark) => openEditBookmark(bookmark, section.id)}
-				onDeleteBookmark={requestDeleteBookmark}
-			/>
-		{/each}
+		<Header
+			bind:searchQuery
+			searchFields={$preferences.searchFields}
+			onSearchFieldsChange={handleSearchFieldsChange}
+			onExpandAll={expandAll}
+			onCollapseAll={collapseAll}
+			onNewSection={openCreateSection}
+		/>
 
-		{#if loaded && board.sections.length === 0}
-			<p class="empty-state">No sections yet. Create one to start adding bookmarks.</p>
-		{:else if !loaded}
-			<p class="empty-state">Loading…</p>
-		{/if}
-	</div>
+		<div class="section-grid">
+			{#each visibleSections as { section, bookmarks } (section.id)}
+				<SectionTile
+					{section}
+					{bookmarks}
+					collapsed={$collapsedSections.has(section.id)}
+					linkTarget={$preferences.linkTarget}
+					onToggleCollapse={() => collapsedSections.toggle(section.id)}
+					onRename={() => openRenameSection(section)}
+					onDeleteRequest={() => requestDeleteSection(section)}
+					onAddBookmark={() => openAddBookmark(section.id)}
+					onEditBookmark={(bookmark) => openEditBookmark(bookmark, section.id)}
+					onDeleteBookmark={requestDeleteBookmark}
+				/>
+			{/each}
 
-	<SettingsFooter linkTarget={$preferences.linkTarget} onChange={handleLinkTargetChange} />
+			{#if currentWorkspace.sections.length === 0}
+				<p class="empty-state">
+					No sections yet in "{currentWorkspace.name}". Create one to start adding bookmarks.
+				</p>
+			{/if}
+		</div>
+
+		<SettingsFooter
+			linkTarget={$preferences.linkTarget}
+			onChange={handleLinkTargetChange}
+			activeWorkspaceId={currentWorkspace.id}
+			activeWorkspaceName={currentWorkspace.name}
+		/>
+	{:else}
+		<p class="empty-state">Loading…</p>
+	{/if}
 </main>
 
 {#if sectionPrompt}
@@ -255,6 +353,18 @@
 		errorMessage={sectionPromptError}
 		onCancel={() => (sectionPrompt = null)}
 		onSubmit={submitSectionPrompt}
+	/>
+{/if}
+
+{#if workspacePrompt}
+	<PromptModal
+		title={workspacePrompt.mode === 'create' ? 'New Workspace' : 'Rename Workspace'}
+		label="Workspace name"
+		initialValue={workspacePrompt.workspace?.name ?? ''}
+		submitLabel={workspacePrompt.mode === 'create' ? 'Create' : 'Save'}
+		errorMessage={workspacePromptError}
+		onCancel={() => (workspacePrompt = null)}
+		onSubmit={submitWorkspacePrompt}
 	/>
 {/if}
 
@@ -272,6 +382,18 @@
 	/>
 {/if}
 
+{#if workspaceToDelete}
+	<ConfirmModal
+		title={`Delete "${workspaceToDelete.name}" workspace?`}
+		message={`This will permanently delete the "${workspaceToDelete.name}" workspace, including ${workspaceToDelete.sections.length} section(s) and ${workspaceToDelete.sections.reduce((sum, s) => sum + s.bookmarks.length, 0)} bookmark(s). This cannot be undone.`}
+		itemList={workspaceToDelete.sections.map((s) => s.name)}
+		confirmLabel="Delete Workspace"
+		danger
+		onCancel={() => (workspaceToDelete = null)}
+		onConfirm={confirmDeleteWorkspace}
+	/>
+{/if}
+
 {#if bookmarkToDelete}
 	<ConfirmModal
 		title={`Delete "${bookmarkToDelete.name}"?`}
@@ -286,7 +408,7 @@
 {#if editingBookmark}
 	<BookmarkModal
 		title={editingBookmark.bookmark ? 'Edit Bookmark' : 'Add Bookmark'}
-		sections={board.sections}
+		sections={currentWorkspace?.sections ?? []}
 		initial={{
 			name: editingBookmark.bookmark?.name ?? '',
 			url: editingBookmark.bookmark?.url ?? '',

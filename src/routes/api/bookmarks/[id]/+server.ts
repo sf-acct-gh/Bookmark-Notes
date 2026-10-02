@@ -1,17 +1,24 @@
 import { json } from '@sveltejs/kit';
-import { deleteBookmark, findDuplicateUrl, updateBookmark, ValidationError } from '../../../../lib/server/store';
+import {
+	deleteBookmark,
+	findBookmarkWorkspaceId,
+	findDuplicateUrl,
+	updateBookmark,
+	ValidationError
+} from '../../../../lib/server/store';
 import type { RequestHandler } from './$types';
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
 	const body = await request.json().catch(() => ({}));
 	const url = String(body.url ?? '');
 
-	if (!body.allowDuplicate) {
-		const duplicate = await findDuplicateUrl(url, params.id);
-		if (duplicate) return json({ duplicate }, { status: 409 });
-	}
-
 	try {
+		if (!body.allowDuplicate) {
+			const workspaceId = await findBookmarkWorkspaceId(params.id);
+			const duplicate = await findDuplicateUrl(workspaceId, url, params.id);
+			if (duplicate) return json({ duplicate }, { status: 409 });
+		}
+
 		const bookmark = await updateBookmark(params.id, {
 			name: String(body.name ?? ''),
 			url,
