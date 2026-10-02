@@ -1,0 +1,11 @@
+services:
+  bookmark-notes:
+    build: .
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3000
+      - BOOKMARK_DATA_FILE=/app/data/bookmarks.json
+    restart: unless-stopped

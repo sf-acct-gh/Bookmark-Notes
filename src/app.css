@@ -1,0 +1,169 @@
+:root {
+	--border: #1a1a1a;
+	--bg: #ffffff;
+	--bg-muted: #f5f5f5;
+	--text: #1a1a1a;
+	--text-muted: #555;
+	--danger: #b3261e;
+	--danger-bg: #fdecea;
+	--radius: 6px;
+	color-scheme: light;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	font-family:
+		'Segoe UI',
+		system-ui,
+		-apple-system,
+		sans-serif;
+	color: var(--text);
+	background: var(--bg);
+}
+
+button {
+	font-family: inherit;
+	cursor: pointer;
+}
+
+input,
+textarea,
+select {
+	font-family: inherit;
+	font-size: 1rem;
+}
+
+a {
+	color: #1155cc;
+}
+
+.icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border: 1px solid var(--border);
+	background: var(--bg);
+	border-radius: var(--radius);
+	font-size: 1rem;
+	line-height: 1;
+	color: var(--text);
+}
+
+.icon-button:hover {
+	background: var(--bg-muted);
+}
+
+.icon-button.danger:hover {
+	background: var(--danger-bg);
+	border-color: var(--danger);
+	color: var(--danger);
+}
+
+.button {
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--bg);
+	color: var(--text);
+}
+
+.button:hover {
+	background: var(--bg-muted);
+}
+
+.button.primary {
+	background: var(--text);
+	color: var(--bg);
+	border-color: var(--text);
+}
+
+.button.primary:hover {
+	opacity: 0.9;
+}
+
+.button.danger {
+	border-color: var(--danger);
+	color: var(--danger);
+}
+
+.button.danger:hover {
+	background: var(--danger-bg);
+}
+
+.modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100;
+	padding: 1rem;
+}
+
+.modal-overlay.stacked {
+	z-index: 200;
+}
+
+.modal {
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 1.5rem;
+	width: 100%;
+	max-width: 420px;
+	max-height: 90vh;
+	overflow-y: auto;
+}
+
+.modal h2 {
+	margin-top: 0;
+}
+
+.modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 1.5rem;
+}
+
+.form-field {
+	margin-bottom: 1rem;
+}
+
+.form-field label {
+	display: block;
+	margin-bottom: 0.25rem;
+	font-weight: 600;
+}
+
+.form-field input[type='text'],
+.form-field input[type='url'],
+.form-field textarea,
+.form-field select {
+	width: 100%;
+	padding: 0.5rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+}
+
+.form-field textarea {
+	min-height: 8rem;
+	resize: vertical;
+}
+
+.form-error {
+	color: var(--danger);
+	margin-top: 0.5rem;
+}
