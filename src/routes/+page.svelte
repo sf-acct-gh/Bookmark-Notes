@@ -8,7 +8,12 @@
 		Section,
 		Workspace
 	} from '../lib/types';
-	import { preferences, type SearchFields, type LinkTarget } from '../lib/stores/preferences';
+	import {
+		preferences,
+		type SearchFields,
+		type LinkTarget,
+		type ColorScheme
+	} from '../lib/stores/preferences';
 	import { collapsedSections } from '../lib/stores/collapsed';
 	import { activeWorkspaceId } from '../lib/stores/activeWorkspace';
 	import WorkspaceTabs from '../lib/components/WorkspaceTabs.svelte';
@@ -136,6 +141,10 @@
 
 	function handleLinkTargetChange(target: LinkTarget) {
 		preferences.update((p) => ({ ...p, linkTarget: target }));
+	}
+
+	function handleColorSchemeChange(scheme: ColorScheme) {
+		preferences.update((p) => ({ ...p, colorScheme: scheme }));
 	}
 
 	function expandAll() {
@@ -391,6 +400,8 @@
 		<SettingsFooter
 			linkTarget={$preferences.linkTarget}
 			onChange={handleLinkTargetChange}
+			colorScheme={$preferences.colorScheme}
+			onColorSchemeChange={handleColorSchemeChange}
 			activeWorkspaceId={currentWorkspace.id}
 			activeWorkspaceName={currentWorkspace.name}
 		/>

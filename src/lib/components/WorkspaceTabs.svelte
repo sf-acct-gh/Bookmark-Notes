@@ -67,23 +67,27 @@
 		border: 1px solid var(--border);
 		border-bottom: none;
 		border-radius: var(--radius) var(--radius) 0 0;
-		background: var(--bg-muted);
+		background: var(--tab-inactive-bg);
 		padding: 0.1rem 0.1rem 0.1rem 0.25rem;
+		box-shadow: inset 0 -2px 0 transparent;
 	}
 
 	.tab-group.active {
-		background: var(--bg);
+		background: var(--tab-active-bg);
+		box-shadow: inset 0 -2px 0 var(--accent);
 	}
 
 	.tab {
 		border: none;
 		background: none;
 		padding: 0.5rem 0.75rem;
-		font-size: 1rem;
+		font-size: 0.9rem;
 		color: var(--text-muted);
 	}
 
 	.tab.active {
+		/* Note: color only, not font-weight — a bold/regular switch would
+		   change the tab's text width and make it resize when clicked. */
 		color: var(--text);
 	}
 

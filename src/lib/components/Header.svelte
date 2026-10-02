@@ -28,7 +28,7 @@
 	<label class="search-label" for="search-input">Search</label>
 	<input id="search-input" type="text" bind:value={searchQuery} placeholder="Type at least 3 characters…" />
 
-	<label class="checkbox">
+	<label class="field-checkbox">
 		<input
 			type="checkbox"
 			checked={searchFields.name}
@@ -36,7 +36,7 @@
 		/>
 		Name
 	</label>
-	<label class="checkbox">
+	<label class="field-checkbox">
 		<input
 			type="checkbox"
 			checked={searchFields.url}
@@ -44,7 +44,7 @@
 		/>
 		URL
 	</label>
-	<label class="checkbox">
+	<label class="field-checkbox">
 		<input
 			type="checkbox"
 			checked={searchFields.notes}
@@ -84,9 +84,11 @@
 		padding: 0.5rem;
 		border: 1px solid var(--border);
 		border-radius: var(--radius);
+		background: var(--bg);
+		color: var(--text);
 	}
 
-	.checkbox {
+	.field-checkbox {
 		display: flex;
 		align-items: center;
 		gap: 0.35rem;
@@ -110,7 +112,7 @@
 	.link-button {
 		background: none;
 		border: none;
-		color: #1155cc;
+		color: var(--accent);
 		padding: 0;
 		font-size: 1rem;
 	}

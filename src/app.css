@@ -1,13 +1,59 @@
+@import 'tailwindcss';
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/themes/cerberus';
+
+/* Manual (attribute-based) dark mode instead of following OS preference —
+   toggled by the footer control, persisted in the preferences store. */
+@custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));
+
+/* Base off Skeleton's "cerberus" theme, but push the surface scale all the
+   way out to true white/black per the light-white / dark-black spec. */
+[data-theme='cerberus'] {
+	--color-surface-50: oklch(1 0 0);
+	--color-surface-100: oklch(0.96 0 0);
+	--color-surface-200: oklch(0.9 0 0);
+	--color-surface-300: oklch(0.8 0 0);
+	--color-surface-400: oklch(0.65 0 0);
+	--color-surface-500: oklch(0.5 0 0);
+	--color-surface-600: oklch(0.4 0 0);
+	--color-surface-700: oklch(0.3 0 0);
+	--color-surface-800: oklch(0.2 0 0);
+	--color-surface-900: oklch(0.12 0 0);
+	--color-surface-950: oklch(0 0 0);
+}
+
 :root {
-	--border: #1a1a1a;
-	--bg: #ffffff;
-	--bg-muted: #f5f5f5;
-	--text: #1a1a1a;
-	--text-muted: #555;
-	--danger: #b3261e;
-	--danger-bg: #fdecea;
-	--radius: 6px;
 	color-scheme: light;
+	@variant dark {
+		color-scheme: dark;
+	}
+
+	/*
+	 * App-level semantic tokens — the single place to tweak colors.
+	 * Values are sourced from the Skeleton "cerberus" palette above, so
+	 * changing a color later is usually a one-line edit here.
+	 */
+	--border: light-dark(var(--color-surface-900), var(--color-surface-300));
+	--divider: light-dark(var(--color-surface-200), var(--color-surface-800));
+	--bg: light-dark(var(--color-surface-50), var(--color-surface-950));
+	--bg-muted: light-dark(var(--color-surface-100), var(--color-surface-900));
+	--header-bg: light-dark(var(--color-surface-100), var(--color-surface-800));
+	--tab-active-bg: var(--bg);
+	--tab-inactive-bg: light-dark(var(--color-surface-200), var(--color-surface-800));
+	--text: light-dark(var(--color-surface-950), var(--color-surface-50));
+	--text-muted: light-dark(var(--color-surface-600), var(--color-surface-400));
+
+	/* Accent — used for links and the active-tab indicator; adapts per mode. */
+	--accent: light-dark(var(--color-primary-600), var(--color-primary-400));
+	/* Button accent is fixed across modes so white button text always has
+	   reliable contrast, rather than following the lighter dark-mode accent. */
+	--accent-button-bg: var(--color-primary-600);
+	--accent-button-text: white;
+
+	--danger: light-dark(var(--color-error-600), var(--color-error-400));
+	--danger-bg: light-dark(var(--color-error-50), var(--color-error-950));
+
+	--radius: 6px;
 }
 
 * {
@@ -42,8 +88,20 @@ select {
 	font-size: 1rem;
 }
 
+/* Tailwind's preflight strips native checkbox/radio rendering
+   (appearance: none with no replacement) — restore it since we're not
+   custom-styling these. */
+input[type='checkbox'],
+input[type='radio'] {
+	appearance: auto;
+	width: 1em;
+	height: 1em;
+	margin: 0;
+	accent-color: var(--accent);
+}
+
 a {
-	color: #1155cc;
+	color: var(--accent);
 }
 
 .icon-button {
@@ -71,11 +129,12 @@ a {
 }
 
 .button {
-	padding: 0.5rem 1rem;
+	padding: 0.4rem 0.9rem;
 	border: 1px solid var(--border);
 	border-radius: var(--radius);
 	background: var(--bg);
 	color: var(--text);
+	font-size: 0.9rem;
 }
 
 .button:hover {
@@ -83,9 +142,9 @@ a {
 }
 
 .button.primary {
-	background: var(--text);
-	color: var(--bg);
-	border-color: var(--text);
+	background: var(--accent-button-bg);
+	color: var(--accent-button-text);
+	border-color: var(--accent-button-bg);
 }
 
 .button.primary:hover {
@@ -104,7 +163,7 @@ a {
 .modal-overlay {
 	position: fixed;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.4);
+	background: rgba(0, 0, 0, 0.5);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -131,6 +190,16 @@ a {
 	margin-top: 0;
 }
 
+.modal ul {
+	list-style: disc;
+	margin: 0.5rem 0;
+	padding-left: 1.25rem;
+}
+
+.modal li {
+	margin-bottom: 0.25rem;
+}
+
 .modal-actions {
 	display: flex;
 	justify-content: flex-end;
@@ -153,9 +222,11 @@ a {
 .form-field textarea,
 .form-field select {
 	width: 100%;
-	padding: 0.5rem;
+	padding: 0.4rem 0.5rem;
 	border: 1px solid var(--border);
 	border-radius: var(--radius);
+	background: var(--bg);
+	color: var(--text);
 }
 
 .form-field textarea {

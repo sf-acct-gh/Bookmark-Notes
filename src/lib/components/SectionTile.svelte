@@ -91,6 +91,8 @@
 		gap: 0.5rem;
 		padding: 0.75rem 1rem;
 		border-bottom: 1px solid var(--border);
+		background: var(--header-bg);
+		border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
 	}
 
 	.collapse-toggle {

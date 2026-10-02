@@ -1,20 +1,50 @@
 <script lang="ts">
-	import type { LinkTarget } from '../stores/preferences';
+	import type { ColorScheme, LinkTarget } from '../stores/preferences';
 
 	interface Props {
 		linkTarget: LinkTarget;
 		onChange: (target: LinkTarget) => void;
+		colorScheme: ColorScheme;
+		onColorSchemeChange: (scheme: ColorScheme) => void;
 		activeWorkspaceId: string;
 		activeWorkspaceName: string;
 	}
 
-	let { linkTarget, onChange, activeWorkspaceId, activeWorkspaceName }: Props = $props();
+	let {
+		linkTarget,
+		onChange,
+		colorScheme,
+		onColorSchemeChange,
+		activeWorkspaceId,
+		activeWorkspaceName
+	}: Props = $props();
 </script>
 
 <footer class="settings-footer">
 	<div class="footer-row">
+		<span class="settings-label">Theme:</span>
+		<label class="field-radio">
+			<input
+				type="radio"
+				name="color-scheme"
+				checked={colorScheme === 'light'}
+				onchange={() => onColorSchemeChange('light')}
+			/>
+			Light
+		</label>
+		<label class="field-radio">
+			<input
+				type="radio"
+				name="color-scheme"
+				checked={colorScheme === 'dark'}
+				onchange={() => onColorSchemeChange('dark')}
+			/>
+			Dark
+		</label>
+	</div>
+	<div class="footer-row">
 		<span class="settings-label">Open bookmarks in:</span>
-		<label class="radio">
+		<label class="field-radio">
 			<input
 				type="radio"
 				name="link-target"
@@ -23,7 +53,7 @@
 			/>
 			Same window
 		</label>
-		<label class="radio">
+		<label class="field-radio">
 			<input
 				type="radio"
 				name="link-target"
@@ -64,7 +94,7 @@
 		color: var(--text);
 	}
 
-	.radio {
+	.field-radio {
 		display: flex;
 		align-items: center;
 		gap: 0.35rem;

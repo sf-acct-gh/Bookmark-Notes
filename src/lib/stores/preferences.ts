@@ -7,17 +7,20 @@ export interface SearchFields {
 }
 
 export type LinkTarget = 'same' | 'new';
+export type ColorScheme = 'light' | 'dark';
 
 export interface Preferences {
 	searchFields: SearchFields;
 	linkTarget: LinkTarget;
+	colorScheme: ColorScheme;
 }
 
 const STORAGE_KEY = 'bookmark-notes:preferences';
 
 const defaults: Preferences = {
 	searchFields: { name: true, url: true, notes: false },
-	linkTarget: 'same'
+	linkTarget: 'same',
+	colorScheme: 'light'
 };
 
 function load(): Preferences {
@@ -28,7 +31,8 @@ function load(): Preferences {
 		const parsed = JSON.parse(raw);
 		return {
 			searchFields: { ...defaults.searchFields, ...parsed.searchFields },
-			linkTarget: parsed.linkTarget === 'new' ? 'new' : 'same'
+			linkTarget: parsed.linkTarget === 'new' ? 'new' : 'same',
+			colorScheme: parsed.colorScheme === 'dark' ? 'dark' : 'light'
 		};
 	} catch {
 		return defaults;
