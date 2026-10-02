@@ -16,30 +16,33 @@
 <div class="workspace-tabs">
 	{#each workspaces as workspace (workspace.id)}
 		{@const active = workspace.id === activeId}
+		{@const canDelete = active && workspaces.length > 1}
 		<div class="tab-group" class:active>
 			<button class="tab" class:active onclick={() => onSelect(workspace.id)}>
 				{workspace.name}
 			</button>
-			{#if active}
-				<button
-					class="tab-icon"
-					title="Rename workspace"
-					aria-label="Rename workspace"
-					onclick={() => onRename(workspace)}
-				>
-					✎
-				</button>
-				{#if workspaces.length > 1}
-					<button
-						class="tab-icon danger"
-						title="Delete workspace"
-						aria-label="Delete workspace"
-						onclick={() => onDeleteRequest(workspace)}
-					>
-						✕
-					</button>
-				{/if}
-			{/if}
+			<button
+				class="tab-icon"
+				class:hidden-icon={!active}
+				title="Rename workspace"
+				aria-label="Rename workspace"
+				aria-hidden={!active}
+				tabindex={active ? 0 : -1}
+				onclick={() => active && onRename(workspace)}
+			>
+				✎
+			</button>
+			<button
+				class="tab-icon danger"
+				class:hidden-icon={!canDelete}
+				title="Delete workspace"
+				aria-label="Delete workspace"
+				aria-hidden={!canDelete}
+				tabindex={canDelete ? 0 : -1}
+				onclick={() => canDelete && onDeleteRequest(workspace)}
+			>
+				✕
+			</button>
 		</div>
 	{/each}
 	<button class="tab new-tab" title="New workspace" aria-label="New workspace" onclick={onCreate}>
@@ -82,7 +85,6 @@
 
 	.tab.active {
 		color: var(--text);
-		font-weight: 600;
 	}
 
 	.new-tab {
@@ -110,6 +112,13 @@
 		font-size: 0.85rem;
 		color: var(--text-muted);
 		flex-shrink: 0;
+	}
+
+	/* Space is always reserved (visibility, not display) so a tab's width
+	   never changes when it becomes active/inactive. */
+	.tab-icon.hidden-icon {
+		visibility: hidden;
+		pointer-events: none;
 	}
 
 	.tab-icon:hover {

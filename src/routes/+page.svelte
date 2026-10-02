@@ -435,7 +435,7 @@
 
 <style>
 	main {
-		max-width: 1100px;
+		max-width: 1800px;
 		margin: 0 auto;
 		padding: 1.5rem;
 	}
@@ -445,21 +445,19 @@
 	}
 
 	.section-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 1rem;
-		align-items: start;
+		columns: 2;
+		column-gap: 1rem;
 		margin-top: 1rem;
 	}
 
 	@media (max-width: 720px) {
 		.section-grid {
-			grid-template-columns: 1fr;
+			columns: 1;
 		}
 	}
 
 	.empty-state {
-		grid-column: 1 / -1;
+		column-span: all;
 		color: var(--text-muted);
 		font-style: italic;
 	}
