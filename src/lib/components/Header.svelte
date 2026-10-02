@@ -72,6 +72,7 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius);
 		padding: 1rem;
+		background: var(--search-bg);
 	}
 
 	.search-label {

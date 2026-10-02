@@ -32,7 +32,7 @@
 			aria-hidden="true"
 		></span>
 		<button
-			class="icon-button"
+			class="icon-button success"
 			title="View/edit notes"
 			aria-label="View/edit notes"
 			onclick={onEdit}

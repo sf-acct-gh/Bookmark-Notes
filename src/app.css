@@ -40,6 +40,9 @@
 	--bg: light-dark(var(--color-surface-50), var(--color-surface-950));
 	--bg-muted: light-dark(var(--color-surface-100), var(--color-surface-900));
 	--header-bg: light-dark(var(--color-surface-100), var(--color-surface-800));
+	/* Search bar panel — a light blue/purple tint in light mode (borrowed from
+	   Skeleton's Dracula surface-50), a darker neutral gray in dark mode. */
+	--search-bg: light-dark(oklch(97.89% 0.01 267.41deg), var(--color-surface-800));
 	--tab-active-bg: color-mix(in oklab, var(--accent) 16%, var(--bg));
 	--tab-inactive-bg: light-dark(var(--color-surface-200), var(--color-surface-800));
 	--text: light-dark(var(--color-surface-950), var(--color-surface-50));
@@ -57,6 +60,9 @@
 
 	--danger: light-dark(var(--color-error-600), var(--color-error-400));
 	--danger-bg: light-dark(var(--color-error-50), var(--color-error-950));
+
+	--success: light-dark(var(--color-success-700), var(--color-success-400));
+	--success-bg: light-dark(var(--color-success-50), var(--color-success-950));
 
 	--radius: 6px;
 }
@@ -133,6 +139,12 @@ a {
 	color: var(--danger);
 }
 
+.icon-button.success:hover {
+	background: var(--success-bg);
+	border-color: var(--success);
+	color: var(--success);
+}
+
 .button {
 	padding: 0.4rem 0.9rem;
 	border: 1px solid var(--border);
@@ -186,13 +198,18 @@ a {
 	border-radius: var(--radius);
 	padding: 1.5rem;
 	width: 100%;
-	max-width: 420px;
+	max-width: 460px;
 	max-height: 90vh;
 	overflow-y: auto;
 }
 
+.modal.modal-lg {
+	max-width: 620px;
+}
+
 .modal h2 {
 	margin-top: 0;
+	margin-bottom: 1.25rem;
 }
 
 .modal ul {

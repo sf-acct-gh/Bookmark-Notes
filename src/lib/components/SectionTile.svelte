@@ -41,7 +41,12 @@
 		</button>
 		<h2 class="tile-title">{section.name}</h2>
 		<div class="tile-actions">
-			<button class="icon-button" title="Rename section" aria-label="Rename section" onclick={onRename}>
+			<button
+				class="icon-button success"
+				title="Rename section"
+				aria-label="Rename section"
+				onclick={onRename}
+			>
 				✎
 			</button>
 			<button
@@ -52,7 +57,12 @@
 			>
 				✕
 			</button>
-			<button class="icon-button" title="Add bookmark" aria-label="Add bookmark" onclick={onAddBookmark}>
+			<button
+				class="icon-button success"
+				title="Add bookmark"
+				aria-label="Add bookmark"
+				onclick={onAddBookmark}
+			>
 				+
 			</button>
 		</div>

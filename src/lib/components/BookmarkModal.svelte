@@ -39,7 +39,7 @@
 
 <div class="modal-overlay" role="presentation" onclick={onCancel} onkeydown={handleKeydown}>
 	<div
-		class="modal"
+		class="modal modal-lg"
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="bookmark-modal-title"

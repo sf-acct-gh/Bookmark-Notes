@@ -69,6 +69,7 @@
 		<span aria-hidden="true">|</span>
 		<a href="/api/export">Download all workspaces</a>
 	</div>
+	<div class="footer-brand">Bookmark Notes</div>
 </footer>
 
 <style>
@@ -98,5 +99,10 @@
 		display: flex;
 		align-items: center;
 		gap: 0.35rem;
+	}
+
+	.footer-brand {
+		text-align: center;
+		margin-top: 0.5rem;
 	}
 </style>

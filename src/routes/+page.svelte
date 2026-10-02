@@ -349,8 +349,6 @@
 </svelte:head>
 
 <main>
-	<h1>Bookmark Notes</h1>
-
 	{#if loaded && currentWorkspace}
 		<WorkspaceTabs
 			workspaces={board.workspaces}
