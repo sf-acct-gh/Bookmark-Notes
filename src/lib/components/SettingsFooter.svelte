@@ -65,9 +65,9 @@
 	</div>
 	<div class="footer-row">
 		<span class="settings-label">Backup:</span>
-		<a href="/api/export/{activeWorkspaceId}">Download this workspace ({activeWorkspaceName})</a>
+		<a href="api/export/{activeWorkspaceId}">Download this workspace ({activeWorkspaceName})</a>
 		<span aria-hidden="true">|</span>
-		<a href="/api/export">Download all workspaces</a>
+		<a href="api/export">Download all workspaces</a>
 	</div>
 	<div class="footer-brand">Bookmark Notes</div>
 </footer>
