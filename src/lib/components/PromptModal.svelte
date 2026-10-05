@@ -1,6 +1,11 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
 
+	interface WorkspaceOption {
+		id: string;
+		name: string;
+	}
+
 	interface Props {
 		title: string;
 		label: string;
@@ -8,7 +13,9 @@
 		submitLabel?: string;
 		errorMessage?: string;
 		onCancel: () => void;
-		onSubmit: (value: string) => void;
+		onSubmit: (value: string, workspaceId?: string) => void;
+		workspaceOptions?: WorkspaceOption[];
+		initialWorkspaceId?: string;
 	}
 
 	let {
@@ -18,16 +25,19 @@
 		submitLabel = 'Save',
 		errorMessage = '',
 		onCancel,
-		onSubmit
+		onSubmit,
+		workspaceOptions,
+		initialWorkspaceId
 	}: Props = $props();
 
 	let value = $state(initialValue);
+	let workspaceId = $state(initialWorkspaceId ?? '');
 
 	function submit(e: Event) {
 		e.preventDefault();
 		const trimmed = value.trim();
 		if (!trimmed) return;
-		onSubmit(trimmed);
+		onSubmit(trimmed, workspaceOptions ? workspaceId : undefined);
 	}
 </script>
 
@@ -37,6 +47,16 @@
 			<label for="prompt-value">{label}</label>
 			<input id="prompt-value" type="text" bind:value autofocus />
 		</div>
+		{#if workspaceOptions}
+			<div class="form-field">
+				<label for="prompt-workspace">Workspace</label>
+				<select id="prompt-workspace" bind:value={workspaceId}>
+					{#each workspaceOptions as workspace (workspace.id)}
+						<option value={workspace.id}>{workspace.name}</option>
+					{/each}
+				</select>
+			</div>
+		{/if}
 		{#if errorMessage}
 			<p class="form-error">{errorMessage}</p>
 		{/if}

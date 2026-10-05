@@ -5,7 +5,12 @@ import type { RequestHandler } from './$types';
 export const PATCH: RequestHandler = async ({ params, request }) => {
 	const body = await request.json().catch(() => ({}));
 	try {
-		const section = await renameSection(params.workspaceId, params.id, String(body.name ?? ''));
+		const section = await renameSection(
+			params.workspaceId,
+			params.id,
+			String(body.name ?? ''),
+			typeof body.workspaceId === 'string' ? body.workspaceId : undefined
+		);
 		return json(section);
 	} catch (err) {
 		if (err instanceof ValidationError) return json({ error: err.message }, { status: 400 });

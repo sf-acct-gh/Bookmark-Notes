@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -11,6 +12,19 @@
 	}
 
 	let { titleId, title, size = 'default', stacked = false, onCancel, children }: Props = $props();
+
+	let modalEl: HTMLElement;
+
+	// The `autofocus` attribute on a form field is unreliable here: it only
+	// engages if nothing else currently has focus, and the button the user
+	// just clicked to open this modal almost always still does. Without an
+	// explicit focus move, the keydown-based Escape handler below never
+	// sees the keypress, since it only bubbles from whatever element is
+	// actually focused (still the trigger button, outside this subtree).
+	onMount(() => {
+		const firstField = modalEl.querySelector<HTMLElement>('input, textarea, select');
+		(firstField ?? modalEl).focus();
+	});
 
 	let offset = $state({ x: 0, y: 0 });
 	let dragging = false;
@@ -47,6 +61,7 @@
 		aria-modal="true"
 		aria-labelledby={titleId}
 		tabindex="-1"
+		bind:this={modalEl}
 		style="transform: translate({offset.x}px, {offset.y}px)"
 	>
 		<h2

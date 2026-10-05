@@ -229,7 +229,7 @@
 		sectionPrompt = { mode: 'rename', section };
 	}
 
-	async function submitSectionPrompt(name: string) {
+	async function submitSectionPrompt(name: string, targetWorkspaceId?: string) {
 		sectionPromptError = '';
 		if (!currentWorkspace) return;
 		const isCreate = sectionPrompt?.mode === 'create';
@@ -240,10 +240,14 @@
 					id: sectionPrompt!.section!.id
 				});
 		const method = isCreate ? 'POST' : 'PATCH';
+		const body: { name: string; workspaceId?: string } = { name };
+		if (!isCreate && targetWorkspaceId && targetWorkspaceId !== currentWorkspace.id) {
+			body.workspaceId = targetWorkspaceId;
+		}
 		const res = await fetch(url, {
 			method,
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ name })
+			body: JSON.stringify(body)
 		});
 		if (!res.ok) {
 			const body = await res.json().catch(() => ({}));
@@ -431,6 +435,8 @@
 		initialValue={sectionPrompt.section?.name ?? ''}
 		submitLabel={sectionPrompt.mode === 'create' ? 'Create' : 'Save'}
 		errorMessage={sectionPromptError}
+		workspaceOptions={sectionPrompt.mode === 'rename' ? board.workspaces : undefined}
+		initialWorkspaceId={currentWorkspace?.id}
 		onCancel={() => (sectionPrompt = null)}
 		onSubmit={submitSectionPrompt}
 	/>

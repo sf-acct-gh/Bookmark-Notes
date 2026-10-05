@@ -254,21 +254,30 @@ export async function createSection(workspaceId: string, name: string): Promise<
 export async function renameSection(
 	workspaceId: string,
 	sectionId: string,
-	name: string
+	name: string,
+	targetWorkspaceId?: string
 ): Promise<Section> {
 	const trimmed = name.trim();
 	if (!trimmed) throw new ValidationError('Section name is required');
 	const d = await load();
 	const workspace = findWorkspace(d, workspaceId);
 	const section = findSectionInWorkspace(workspace, sectionId);
+	const destination = targetWorkspaceId ? findWorkspace(d, targetWorkspaceId) : workspace;
 	if (
-		workspace.sections.some(
+		destination.sections.some(
 			(s) => s.id !== sectionId && normalizeForCompare(s.name) === normalizeForCompare(trimmed)
 		)
 	) {
-		throw new ValidationError(`A section named "${trimmed}" already exists in this workspace`);
+		throw new ValidationError(`A section named "${trimmed}" already exists in that workspace`);
 	}
+
 	section.name = trimmed;
+
+	if (destination.id !== workspace.id) {
+		workspace.sections = workspace.sections.filter((s) => s.id !== sectionId);
+		destination.sections.push(section);
+	}
+
 	await persist();
 	broadcast();
 	return section;
