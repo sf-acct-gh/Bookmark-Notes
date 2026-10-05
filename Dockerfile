@@ -1,4 +1,6 @@
 FROM node:22-alpine AS build
+ARG APP_BASE=
+ENV APP_BASE=$APP_BASE
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

@@ -1,6 +1,49 @@
 services:
   bookmark-notes:
-    build: .
+    build:
+      context: .
+      args:
+        # ─────────────────────────────────────────────────────────────────
+        # APP_BASE — the URL prefix this app is served under.
+        #
+        # This is a BUILD-TIME value (Docker build-arg), not a runtime env
+        # var: SvelteKit bakes its base path into the compiled client
+        # bundle and server routing, and adapter-node cannot read it from
+        # `environment:` at runtime (see sveltejs/kit issues #7242, #15063,
+        # #17211). Changing this value always requires a rebuild:
+        #     APP_BASE=/bookmarknotes docker compose build
+        # Editing `environment:` below does NOT affect this.
+        #
+        # Default: unset/empty ('') — serves from the root "/".
+        # NOTE: the empty string, not the literal "/" — SvelteKit's
+        # convention is '' for root, or '/subdir' (leading slash, NO
+        # trailing slash) for a subpath.
+        #
+        # Whatever value you choose becomes the prefix for every root-level
+        # path this app owns. With APP_BASE unset, those paths are:
+        #   /                -> the app itself
+        #   /_app/*          -> SvelteKit's built JS/CSS bundles (immutable,
+        #                       hashed filenames + version.json)
+        #   /api/*           -> all API routes (stream, data, export,
+        #                       workspaces, bookmarks)
+        #   /robots.txt      -> static file
+        # With e.g. APP_BASE=/bookmarknotes, those become:
+        #   /bookmarknotes            -> the app itself
+        #   /bookmarknotes/_app/*     -> built JS/CSS bundles
+        #   /bookmarknotes/api/*      -> all API routes
+        #   /bookmarknotes/robots.txt -> static file
+        # Your reverse proxy must route ALL of these to this container,
+        # passing the full path through UNMODIFIED (no prefix-stripping —
+        # the app now expects and handles the prefix itself). E.g. in Caddy:
+        #     handle /bookmarknotes* {
+        #         reverse_proxy bookmark-notes:3000
+        #     }
+        # (plain `handle`, not `handle_path` — `handle_path` strips the
+        # prefix, which would now be wrong.)
+        #
+        # Just edit the value below directly, then run `docker compose build`.
+        # ─────────────────────────────────────────────────────────────────
+        APP_BASE: ''
     ports:
       - '3000:3000'
     volumes:

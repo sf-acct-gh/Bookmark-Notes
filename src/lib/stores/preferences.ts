@@ -19,7 +19,7 @@ const STORAGE_KEY = 'bookmark-notes:preferences';
 
 const defaults: Preferences = {
 	searchFields: { name: true, url: true, notes: false },
-	linkTarget: 'same',
+	linkTarget: 'new',
 	colorScheme: 'light'
 };
 

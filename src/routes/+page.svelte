@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
 	import type {
 		Bookmark,
 		BookmarkData,
@@ -59,7 +60,7 @@
 	let columnCount = $state(2);
 
 	onMount(() => {
-		const source = new EventSource('api/stream');
+		const source = new EventSource(resolve('/api/stream'));
 		source.onmessage = (event) => {
 			board = JSON.parse(event.data) as BookmarkData;
 			loaded = true;
@@ -182,7 +183,9 @@
 	async function submitWorkspacePrompt(name: string) {
 		workspacePromptError = '';
 		const isCreate = workspacePrompt?.mode === 'create';
-		const url = isCreate ? 'api/workspaces' : `api/workspaces/${workspacePrompt!.workspace!.id}`;
+		const url = isCreate
+			? resolve('/api/workspaces')
+			: resolve('/api/workspaces/[id]', { id: workspacePrompt!.workspace!.id });
 		const method = isCreate ? 'POST' : 'PATCH';
 		const res = await fetch(url, {
 			method,
@@ -207,7 +210,7 @@
 
 	async function confirmDeleteWorkspace() {
 		if (!workspaceToDelete) return;
-		await fetch(`api/workspaces/${workspaceToDelete.id}`, {
+		await fetch(resolve('/api/workspaces/[id]', { id: workspaceToDelete.id }), {
 			method: 'DELETE',
 			headers: { 'content-type': 'application/json' }
 		});
@@ -230,8 +233,12 @@
 		sectionPromptError = '';
 		if (!currentWorkspace) return;
 		const isCreate = sectionPrompt?.mode === 'create';
-		const base = `api/workspaces/${currentWorkspace.id}/sections`;
-		const url = isCreate ? base : `${base}/${sectionPrompt!.section!.id}`;
+		const url = isCreate
+			? resolve('/api/workspaces/[workspaceId]/sections', { workspaceId: currentWorkspace.id })
+			: resolve('/api/workspaces/[workspaceId]/sections/[id]', {
+					workspaceId: currentWorkspace.id,
+					id: sectionPrompt!.section!.id
+				});
 		const method = isCreate ? 'POST' : 'PATCH';
 		const res = await fetch(url, {
 			method,
@@ -252,10 +259,16 @@
 
 	async function confirmDeleteSection() {
 		if (!sectionToDelete || !currentWorkspace) return;
-		await fetch(`api/workspaces/${currentWorkspace.id}/sections/${sectionToDelete.id}`, {
-			method: 'DELETE',
-			headers: { 'content-type': 'application/json' }
-		});
+		await fetch(
+			resolve('/api/workspaces/[workspaceId]/sections/[id]', {
+				workspaceId: currentWorkspace.id,
+				id: sectionToDelete.id
+			}),
+			{
+				method: 'DELETE',
+				headers: { 'content-type': 'application/json' }
+			}
+		);
 		sectionToDelete = null;
 	}
 
@@ -267,7 +280,7 @@
 
 	async function confirmDeleteBookmark() {
 		if (!bookmarkToDelete) return;
-		await fetch(`api/bookmarks/${bookmarkToDelete.id}`, {
+		await fetch(resolve('/api/bookmarks/[id]', { id: bookmarkToDelete.id }), {
 			method: 'DELETE',
 			headers: { 'content-type': 'application/json' }
 		});
@@ -292,8 +305,11 @@
 		const isNew = !editingBookmark?.bookmark;
 		const body = { ...payload, allowDuplicate };
 		const endpoint = isNew
-			? `api/workspaces/${currentWorkspace.id}/sections/${payload.sectionId}/bookmarks`
-			: `api/bookmarks/${editingBookmark!.bookmark!.id}`;
+			? resolve('/api/workspaces/[workspaceId]/sections/[id]/bookmarks', {
+					workspaceId: currentWorkspace.id,
+					id: payload.sectionId
+				})
+			: resolve('/api/bookmarks/[id]', { id: editingBookmark!.bookmark!.id });
 		const method = isNew ? 'POST' : 'PATCH';
 
 		const res = await fetch(endpoint, {

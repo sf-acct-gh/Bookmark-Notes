@@ -210,6 +210,12 @@ a {
 .modal h2 {
 	margin-top: 0;
 	margin-bottom: 1.25rem;
+	cursor: grab;
+	user-select: none;
+}
+
+.modal h2:active {
+	cursor: grabbing;
 }
 
 .modal ul {

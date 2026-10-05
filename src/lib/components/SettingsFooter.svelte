@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { ColorScheme, LinkTarget } from '../stores/preferences';
 
 	interface Props {
@@ -65,9 +66,9 @@
 	</div>
 	<div class="footer-row">
 		<span class="settings-label">Backup:</span>
-		<a href="api/export/{activeWorkspaceId}">Download this workspace ({activeWorkspaceName})</a>
+		<a href={resolve('/api/export/[workspaceId]', { workspaceId: activeWorkspaceId })}>Download this workspace ({activeWorkspaceName})</a>
 		<span aria-hidden="true">|</span>
-		<a href="api/export">Download all workspaces</a>
+		<a href={resolve('/api/export')}>Download all workspaces</a>
 	</div>
 	<div class="footer-brand">Bookmark Notes</div>
 </footer>
