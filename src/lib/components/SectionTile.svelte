@@ -14,6 +14,7 @@
 		onAddBookmark: () => void;
 		onEditBookmark: (bookmark: Bookmark) => void;
 		onDeleteBookmark: (bookmark: Bookmark) => void;
+		onCopyUrl: () => void;
 	}
 
 	let {
@@ -26,7 +27,8 @@
 		onDeleteRequest,
 		onAddBookmark,
 		onEditBookmark,
-		onDeleteBookmark
+		onDeleteBookmark,
+		onCopyUrl
 	}: Props = $props();
 </script>
 
@@ -79,6 +81,7 @@
 						{linkTarget}
 						onEdit={() => onEditBookmark(bookmark)}
 						onDelete={() => onDeleteBookmark(bookmark)}
+						{onCopyUrl}
 					/>
 				{/each}
 			{/if}

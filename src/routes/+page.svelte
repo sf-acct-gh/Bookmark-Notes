@@ -53,6 +53,16 @@
 	let bookmarkToDelete = $state<Bookmark | null>(null);
 	let workspaceToDelete = $state<Workspace | null>(null);
 
+	// Copy-link toast
+	let showCopyToast = $state(false);
+	let copyToastTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function flashCopyToast() {
+		showCopyToast = true;
+		clearTimeout(copyToastTimer);
+		copyToastTimer = setTimeout(() => (showCopyToast = false), 2000);
+	}
+
 	const currentWorkspace = $derived(
 		board.workspaces.find((w) => w.id === $activeWorkspaceId) ?? board.workspaces[0]
 	);
@@ -408,6 +418,7 @@
 								onAddBookmark={() => openAddBookmark(section.id)}
 								onEditBookmark={(bookmark) => openEditBookmark(bookmark, section.id)}
 								onDeleteBookmark={requestDeleteBookmark}
+								onCopyUrl={flashCopyToast}
 							/>
 						{/each}
 					</div>
@@ -519,6 +530,10 @@
 	/>
 {/if}
 
+{#if showCopyToast}
+	<div class="copy-toast" role="status">Copied link to clipboard</div>
+{/if}
+
 <style>
 	main {
 		max-width: 1800px;
@@ -548,5 +563,19 @@
 	.empty-state {
 		color: var(--text-muted);
 		font-style: italic;
+	}
+
+	.copy-toast {
+		position: fixed;
+		bottom: 1.5rem;
+		left: 50%;
+		transform: translateX(-50%);
+		background: var(--text);
+		color: var(--bg);
+		padding: 0.6rem 1.25rem;
+		border-radius: var(--radius);
+		font-size: 0.9rem;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+		z-index: 300;
 	}
 </style>

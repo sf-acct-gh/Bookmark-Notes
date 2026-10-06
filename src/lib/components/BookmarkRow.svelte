@@ -7,12 +7,23 @@
 		linkTarget: LinkTarget;
 		onEdit: () => void;
 		onDelete: () => void;
+		onCopyUrl: () => void;
 	}
 
-	let { bookmark, linkTarget, onEdit, onDelete }: Props = $props();
+	let { bookmark, linkTarget, onEdit, onDelete, onCopyUrl }: Props = $props();
 
 	const target = $derived(linkTarget === 'new' ? '_blank' : '_self');
 	const hasNotes = $derived(bookmark.notes.trim().length > 0);
+
+	async function copyUrl() {
+		try {
+			await navigator.clipboard.writeText(bookmark.url);
+			onCopyUrl();
+		} catch {
+			// Clipboard API unavailable (e.g. non-HTTPS/non-localhost context)
+			// or permission denied — nothing else sensible to do here.
+		}
+	}
 </script>
 
 <div class="bookmark-row">
@@ -20,9 +31,9 @@
 		<a class="bookmark-name" href={bookmark.url} target={target} rel="noopener noreferrer">
 			{bookmark.name}
 		</a>
-		<a class="bookmark-url" href={bookmark.url} target={target} rel="noopener noreferrer">
+		<button type="button" class="bookmark-url" title={bookmark.url} onclick={copyUrl}>
 			{bookmark.url}
-		</a>
+		</button>
 	</div>
 	<div class="bookmark-actions">
 		<span
@@ -89,9 +100,20 @@
 	}
 
 	.bookmark-url {
+		font: inherit;
 		font-size: 0.95rem;
 		color: var(--url-text);
-		overflow-wrap: anywhere;
+		display: block;
+		width: 100%;
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		text-align: left;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
 	}
 
 	.bookmark-actions {
