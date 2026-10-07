@@ -93,6 +93,21 @@ body {
 	color: #9ca3af;
 }
 
+.notes-dot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #1f2937;
+	flex-shrink: 0;
+}
+
+/* Space is always reserved (visibility, not display) so the info button
+   lines up at the same position whether or not a bookmark has notes. */
+.notes-dot.hidden-dot {
+	visibility: hidden;
+}
+
 .row-info-btn {
 	flex-shrink: 0;
 	border: none;

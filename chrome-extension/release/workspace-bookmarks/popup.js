@@ -16,6 +16,11 @@ init();
 
 async function init() {
 	await loadFromStorage();
+
+	const { lastView } = await chrome.storage.local.get(['lastView']);
+	if (isValidViewShape(lastView)) view = lastView;
+	reconcileView();
+
 	render();
 }
 
@@ -34,11 +39,43 @@ function findSection(workspace, id) {
 	return workspace?.sections.find((s) => s.id === id);
 }
 
+// Sets the current navigation position and remembers it (chrome.storage.local)
+// so the next time the popup opens — whether the user clicked a bookmark,
+// clicked away, or just closed it — it resumes in the same place.
+function setView(newView) {
+	view = newView;
+	chrome.storage.local.set({ lastView: newView });
+}
+
+function isValidViewShape(v) {
+	if (!v || typeof v !== 'object') return false;
+	if (v.level === 'workspaces') return true;
+	if (v.level === 'sections') return typeof v.workspaceId === 'string';
+	if (v.level === 'bookmarks') return typeof v.workspaceId === 'string' && typeof v.sectionId === 'string';
+	return false;
+}
+
+// Falls back up a level (or to root) if the remembered/current position no
+// longer exists in `workspaces` — e.g. that workspace or section was
+// deleted/renamed away since this position was saved.
+function reconcileView() {
+	if (view.level === 'sections' && !findWorkspace(view.workspaceId)) {
+		setView({ level: 'workspaces' });
+	} else if (view.level === 'bookmarks') {
+		const ws = findWorkspace(view.workspaceId);
+		if (!ws) {
+			setView({ level: 'workspaces' });
+		} else if (!findSection(ws, view.sectionId)) {
+			setView({ level: 'sections', workspaceId: ws.id });
+		}
+	}
+}
+
 backBtn.addEventListener('click', () => {
 	if (view.level === 'bookmarks') {
-		view = { level: 'sections', workspaceId: view.workspaceId };
+		setView({ level: 'sections', workspaceId: view.workspaceId });
 	} else if (view.level === 'sections') {
-		view = { level: 'workspaces' };
+		setView({ level: 'workspaces' });
 	}
 	render();
 });
@@ -50,16 +87,7 @@ refreshBtn.addEventListener('click', async () => {
 	await loadFromStorage();
 
 	// Try to keep the user's place if it still exists after the refresh.
-	if (view.level === 'sections' && !findWorkspace(view.workspaceId)) {
-		view = { level: 'workspaces' };
-	} else if (view.level === 'bookmarks') {
-		const ws = findWorkspace(view.workspaceId);
-		if (!ws) {
-			view = { level: 'workspaces' };
-		} else if (!findSection(ws, view.sectionId)) {
-			view = { level: 'sections', workspaceId: ws.id };
-		}
-	}
+	reconcileView();
 
 	refreshBtn.disabled = false;
 	if (result?.ok === false) {
@@ -91,7 +119,7 @@ function renderEmpty(message) {
 	listEl.appendChild(p);
 }
 
-function makeRow({ label, arrow, onClick, infoOnClick, title }) {
+function makeRow({ label, arrow, onClick, infoOnClick, title, hasNotes }) {
 	const row = document.createElement('div');
 	row.className = 'row';
 
@@ -112,6 +140,13 @@ function makeRow({ label, arrow, onClick, infoOnClick, title }) {
 	}
 
 	if (infoOnClick) {
+		const dot = document.createElement('span');
+		dot.className = 'notes-dot';
+		if (!hasNotes) dot.classList.add('hidden-dot');
+		dot.title = hasNotes ? 'Has notes' : '';
+		dot.setAttribute('aria-hidden', 'true');
+		row.appendChild(dot);
+
 		const infoBtn = document.createElement('button');
 		infoBtn.type = 'button';
 		infoBtn.className = 'row-info-btn';
@@ -168,7 +203,7 @@ function renderWorkspaces() {
 			label: workspace.name,
 			arrow: true,
 			onClick: () => {
-				view = { level: 'sections', workspaceId: workspace.id };
+				setView({ level: 'sections', workspaceId: workspace.id });
 				render();
 			}
 		});
@@ -179,7 +214,7 @@ function renderWorkspaces() {
 function renderSections() {
 	const workspace = findWorkspace(view.workspaceId);
 	if (!workspace) {
-		view = { level: 'workspaces' };
+		setView({ level: 'workspaces' });
 		render();
 		return;
 	}
@@ -197,7 +232,7 @@ function renderSections() {
 			label: section.name,
 			arrow: true,
 			onClick: () => {
-				view = { level: 'bookmarks', workspaceId: workspace.id, sectionId: section.id };
+				setView({ level: 'bookmarks', workspaceId: workspace.id, sectionId: section.id });
 				render();
 			}
 		});
@@ -209,7 +244,7 @@ function renderBookmarks() {
 	const workspace = findWorkspace(view.workspaceId);
 	const section = findSection(workspace, view.sectionId);
 	if (!workspace || !section) {
-		view = workspace ? { level: 'sections', workspaceId: workspace.id } : { level: 'workspaces' };
+		setView(workspace ? { level: 'sections', workspaceId: workspace.id } : { level: 'workspaces' });
 		render();
 		return;
 	}
@@ -230,7 +265,8 @@ function renderBookmarks() {
 			label: bookmark.name,
 			title: tooltipParts.join('\n'),
 			onClick: () => openBookmark(bookmark),
-			infoOnClick: bookmark.id ? () => openDetails(bookmark.id) : undefined
+			infoOnClick: bookmark.id ? () => openDetails(bookmark.id) : undefined,
+			hasNotes: Boolean(bookmark.notes && bookmark.notes.trim())
 		});
 		listEl.appendChild(row);
 	}
@@ -250,7 +286,7 @@ function openDetails(bookmarkId) {
 		url: `details.html?id=${encodeURIComponent(bookmarkId)}`,
 		type: 'popup',
 		width: 420,
-		height: 280
+		height: 560
 	});
 }
 
