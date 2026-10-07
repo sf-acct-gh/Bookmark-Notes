@@ -161,7 +161,7 @@ function renderEmpty(message) {
 	listEl.appendChild(p);
 }
 
-function makeRow({ label, arrow, onClick, infoOnClick, title, hasNotes }) {
+function makeRow({ label, arrow, onClick, onMiddleClick, onContextMenu, infoOnClick, title, hasNotes }) {
 	const row = document.createElement('div');
 	row.className = 'row';
 
@@ -171,6 +171,28 @@ function makeRow({ label, arrow, onClick, infoOnClick, title, hasNotes }) {
 	main.textContent = label;
 	if (title) main.title = title;
 	main.addEventListener('click', onClick);
+
+	if (onMiddleClick) {
+		// Middle-click normally triggers the browser's autoscroll cursor on
+		// mousedown; suppress that so it behaves like a deliberate action.
+		main.addEventListener('mousedown', (e) => {
+			if (e.button === 1) e.preventDefault();
+		});
+		main.addEventListener('auxclick', (e) => {
+			if (e.button === 1) {
+				e.preventDefault();
+				onMiddleClick();
+			}
+		});
+	}
+
+	if (onContextMenu) {
+		main.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			onContextMenu();
+		});
+	}
+
 	row.appendChild(main);
 
 	if (arrow) {
@@ -320,6 +342,8 @@ function renderBookmarks() {
 			label: bookmark.name,
 			title: tooltipParts.join('\n'),
 			onClick: () => openBookmark(bookmark),
+			onMiddleClick: () => openBookmarkInNewTab(bookmark),
+			onContextMenu: () => copyBookmarkUrl(bookmark),
 			infoOnClick: () => openDetails(bookmark),
 			hasNotes: Boolean(bookmark.notes && bookmark.notes.trim())
 		});
@@ -334,6 +358,24 @@ async function openBookmark(bookmark) {
 		await chrome.tabs.update(tab.id, { url: bookmark.url });
 	}
 	window.close();
+}
+
+// Mirrors how a middle-click normally behaves on a link: open in a new
+// background tab and leave the popup open so more bookmarks can be clicked.
+async function openBookmarkInNewTab(bookmark) {
+	if (!isSafeUrl(bookmark.url)) return;
+	await chrome.tabs.create({ url: bookmark.url, active: false });
+}
+
+async function copyBookmarkUrl(bookmark) {
+	if (!isSafeUrl(bookmark.url)) return;
+	try {
+		await navigator.clipboard.writeText(bookmark.url);
+		showStatus('URL copied to clipboard');
+	} catch {
+		showStatus('Could not copy URL');
+	}
+	setTimeout(hideStatus, 1500);
 }
 
 function openDetails(bookmark) {
