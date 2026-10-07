@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Bookmark Notes</title>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<header class="bar">
+			<button id="back-btn" class="back-btn" title="Back" aria-label="Back" hidden>←</button>
+			<nav id="breadcrumb" class="breadcrumb" aria-label="Current location">Workspaces</nav>
+			<button id="refresh-btn" class="refresh-btn" title="Refresh bookmarks" aria-label="Refresh bookmarks">
+				⟳
+			</button>
+		</header>
+		<div id="status" class="status" hidden></div>
+		<main id="list" class="list"></main>
+		<footer id="footer" class="footer"></footer>
+
+		<script src="config.js"></script>
+		<script src="utils.js"></script>
+		<script src="popup.js"></script>
+	</body>
+</html>

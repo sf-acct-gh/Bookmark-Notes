@@ -1,0 +1,87 @@
+Bookmark Notes Browser — Chrome extension
+==========================================
+
+This extension lets you browse your Bookmark Notes workspaces, sections, and
+bookmarks from the Chrome toolbar, and jump to one with a click. It is
+read-only — it never writes anything back to your Bookmark Notes app. All
+edits still happen in the normal web interface.
+
+It works entirely from a cached copy of your bookmarks, refreshed
+periodically in the background — it does NOT contact your server every time
+you open the popup.
+
+
+STEP 1 — Point it at your own Bookmark Notes data
+--------------------------------------------------
+Open:
+    workspace-bookmarks/config.js
+
+and change this line near the top to your own export URL:
+    const BOOKMARKS_URL = 'https://opentools.cudacan.com/bookmarknotes/api/export';
+
+This should be the same URL you'd use to download a full backup (e.g. via
+`curl <your-url>`) — it returns the full workspaces/sections/bookmarks JSON.
+It must be an https:// (or http:// for local testing) URL.
+
+
+STEP 2 — Update the matching permission in the manifest
+--------------------------------------------------------
+Open:
+    workspace-bookmarks/manifest.json
+
+and find this line:
+    "host_permissions": ["https://opentools.cudacan.com/*"]
+
+Change the domain to match whatever URL you put in STEP 1 (just the
+scheme + host, e.g. "https://your-domain.example/*"). This is what lets the
+extension actually reach your server — Chrome blocks the request otherwise.
+
+
+STEP 3 — Package it into a zip (optional, for moving it around)
+------------------------------------------------------------------
+IMPORTANT: Chrome cannot install an extension directly from a .zip file —
+that's only possible for extensions published on the Chrome Web Store. The
+zip here is just a convenient way to move the folder to another machine, or
+keep a clean copy. You will always install it from the UNZIPPED folder (see
+Step 4).
+
+To create the zip, run this from inside the `release` folder (the one this
+file is in):
+    zip -r workspace-bookmarks.zip workspace-bookmarks
+
+Or just run the included helper script instead, which does the same thing:
+    ./build-zip.sh
+
+Either way you'll end up with `workspace-bookmarks.zip` next to this file.
+
+
+STEP 4 — Install it in Chrome
+------------------------------
+1. If you made a zip in Step 3, unzip it first (skip this if you're
+   installing directly from the `workspace-bookmarks` folder already here).
+2. Open chrome://extensions in Chrome.
+3. Turn on "Developer mode" (toggle, usually top-right).
+4. Click "Load unpacked".
+5. Select the `workspace-bookmarks` folder (the one containing
+   manifest.json) — NOT the zip file itself.
+6. The "Bookmark Notes Browser" icon should now appear in your toolbar.
+   You may need to click the puzzle-piece icon in the toolbar and "pin" it
+   to keep it visible.
+
+Click the icon any time to browse: Workspaces -> a workspace's sections ->
+a section's bookmarks. Click a bookmark to open it in the current tab.
+Click the small "ⓘ" next to a bookmark to see its full URL and notes in a
+separate window. Use the ⟳ button in the popup to force an immediate
+refresh instead of waiting for the automatic one (every 6 hours).
+
+
+Troubleshooting
+----------------
+- "Bookmarks are not available yet..." — the extension has never
+  successfully downloaded your data. Double check the URL in config.js is
+  correct and reachable, and that the host_permissions domain in
+  manifest.json matches it exactly, then reload the extension
+  (chrome://extensions -> the reload icon on this extension's card).
+- Changed config.js or manifest.json after installing? You need to reload
+  the extension (chrome://extensions -> reload icon) for the change to take
+  effect — just refreshing the popup isn't enough for manifest changes.
