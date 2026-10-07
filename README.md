@@ -51,20 +51,20 @@ A read-only Chrome extension lets you browse your workspaces, sections,
 and bookmarks from the toolbar and jump to one with a click. It never
 writes anything back — all editing still happens in the web UI above.
 
-The extension's source lives in `chrome-extension/release/workspace-bookmarks/`.
+The extension's source lives in `chrome-extension/import-to-chrome/`.
 Before loading it into Chrome, point it at your own instance:
 
-1. Open `workspace-bookmarks/config.js` and set `BOOKMARKS_URL` to your own
+1. Open `import-to-chrome/config.js` and set `BOOKMARKS_URL` to your own
    export URL — the same one you'd use to download a backup, e.g.
    `https://your-domain.example/api/export`.
-2. Open `workspace-bookmarks/manifest.json` and update the
+2. Open `import-to-chrome/manifest.json` and update the
    `host_permissions` entry to match that URL's domain.
 
 Then install it:
 
 1. Go to `chrome://extensions` in Chrome.
 2. Turn on "Developer mode".
-3. Click "Load unpacked" and select the `workspace-bookmarks` folder.
+3. Click "Load unpacked" and select the `import-to-chrome` folder.
 
-See `chrome-extension/release/instructions.txt` for the full walkthrough,
-including how to package it into a zip for moving to another machine.
+See `chrome-extension/instructions.txt` for the full walkthrough, including
+how to package it into a zip for moving to another machine.

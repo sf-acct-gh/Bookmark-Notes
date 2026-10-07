@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Bookmark Notes</title>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<div class="viewport">
+			<div id="slider" class="slider">
+				<section class="panel">
+					<header class="bar">
+						<button id="back-btn" class="back-btn" title="Back" aria-label="Back" hidden>←</button>
+						<nav id="breadcrumb" class="breadcrumb" aria-label="Current location">Workspaces</nav>
+						<button
+							id="refresh-btn"
+							class="refresh-btn"
+							title="Refresh bookmarks"
+							aria-label="Refresh bookmarks"
+						>
+							⟳
+						</button>
+					</header>
+					<div id="status" class="status"></div>
+					<main id="list" class="list"></main>
+					<footer id="footer" class="footer">
+						<span id="footer-text" class="footer-text"></span>
+						<span class="theme-toggle" role="group" aria-label="Color theme">
+							<button
+								type="button"
+								class="theme-circle theme-circle-light"
+								data-theme-choice="light"
+								title="Light mode"
+								aria-label="Light mode"
+							></button>
+							<button
+								type="button"
+								class="theme-circle theme-circle-dark"
+								data-theme-choice="dark"
+								title="Dark mode"
+								aria-label="Dark mode"
+							></button>
+						</span>
+					</footer>
+				</section>
+
+				<section class="panel">
+					<header class="bar">
+						<button id="details-close-btn" class="back-btn" title="Close" aria-label="Close details">
+							←
+						</button>
+						<nav class="breadcrumb">Details</nav>
+					</header>
+					<div id="details-body" class="details-body">
+						<h2 id="details-name"></h2>
+						<div class="field-label">URL</div>
+						<div class="field-value" id="details-url"></div>
+						<div class="field-label" id="details-notes-label" hidden>Notes</div>
+						<div class="field-value" id="details-notes" hidden></div>
+					</div>
+					<footer id="details-footer" class="footer">
+						<span id="details-footer-text" class="footer-text"></span>
+						<span class="theme-toggle" role="group" aria-label="Color theme">
+							<button
+								type="button"
+								class="theme-circle theme-circle-light"
+								data-theme-choice="light"
+								title="Light mode"
+								aria-label="Light mode"
+							></button>
+							<button
+								type="button"
+								class="theme-circle theme-circle-dark"
+								data-theme-choice="dark"
+								title="Dark mode"
+								aria-label="Dark mode"
+							></button>
+						</span>
+					</footer>
+				</section>
+			</div>
+		</div>
+
+		<script src="config.js"></script>
+		<script src="utils.js"></script>
+		<script src="popup.js"></script>
+	</body>
+</html>

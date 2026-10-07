@@ -70,6 +70,12 @@
 		<span aria-hidden="true">|</span>
 		<a href={resolve('/api/export')}>Download all workspaces</a>
 	</div>
+	<div class="footer-row">
+		<span class="settings-label">Chrome Extension:</span>
+		<a href="https://github.com/sf-acct-gh/Bookmark-Notes/" target="_blank" rel="noopener noreferrer"
+			>View on GitHub</a
+		>
+	</div>
 	<div class="footer-brand">Bookmark Notes</div>
 </footer>
 

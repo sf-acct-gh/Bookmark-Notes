@@ -1,5 +1,5 @@
-// Shared between popup.js and details.js (loaded via a plain <script> tag in
-// each page, not a module — there's no bundler in this extension).
+// Loaded via a plain <script> tag in popup.html, not a module — there's no
+// bundler in this extension.
 
 // Only ever treat plain http(s) URLs as clickable/navigable. Bookmark data
 // comes from a remote, untrusted JSON file, so this is a defense-in-depth

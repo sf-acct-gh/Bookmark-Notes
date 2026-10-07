@@ -3,7 +3,17 @@ const refreshBtn = document.getElementById('refresh-btn');
 const breadcrumbEl = document.getElementById('breadcrumb');
 const statusEl = document.getElementById('status');
 const listEl = document.getElementById('list');
-const footerEl = document.getElementById('footer');
+const footerTextEl = document.getElementById('footer-text');
+const detailsFooterTextEl = document.getElementById('details-footer-text');
+const themeCircleButtons = document.querySelectorAll('.theme-circle');
+
+const sliderEl = document.getElementById('slider');
+const detailsCloseBtn = document.getElementById('details-close-btn');
+const detailsNameEl = document.getElementById('details-name');
+const detailsUrlEl = document.getElementById('details-url');
+const detailsNotesLabelEl = document.getElementById('details-notes-label');
+const detailsNotesEl = document.getElementById('details-notes');
+const detailsBodyEl = document.getElementById('details-body');
 
 let workspaces = [];
 let lastUpdated = null;
@@ -16,12 +26,36 @@ init();
 
 async function init() {
 	await loadFromStorage();
+	await loadAndApplyColorScheme();
 
 	const { lastView } = await chrome.storage.local.get(['lastView']);
 	if (isValidViewShape(lastView)) view = lastView;
 	reconcileView();
 
 	render();
+}
+
+// Light is the default for first-time installs (no stored preference yet);
+// the user's choice afterward persists in chrome.storage.local so it
+// survives the browser closing/reopening.
+async function loadAndApplyColorScheme() {
+	const { colorScheme } = await chrome.storage.local.get(['colorScheme']);
+	applyColorScheme(colorScheme === 'dark' ? 'dark' : 'light');
+}
+
+function applyColorScheme(colorScheme) {
+	document.documentElement.dataset.theme = colorScheme;
+	for (const btn of themeCircleButtons) {
+		btn.classList.toggle('active', btn.dataset.themeChoice === colorScheme);
+	}
+}
+
+for (const btn of themeCircleButtons) {
+	btn.addEventListener('click', () => {
+		const colorScheme = btn.dataset.themeChoice;
+		applyColorScheme(colorScheme);
+		chrome.storage.local.set({ colorScheme });
+	});
 }
 
 async function loadFromStorage() {
@@ -98,13 +132,21 @@ refreshBtn.addEventListener('click', async () => {
 	render();
 });
 
+detailsCloseBtn.addEventListener('click', () => {
+	sliderEl.classList.remove('show-details');
+});
+
+// Toggles a class (visibility), not the hidden attribute (display) — the
+// status row's height must always stay reserved in the layout so the
+// popup's overall height never changes. See the comment on .viewport in
+// styles.css for why.
 function showStatus(message) {
 	statusEl.textContent = message;
-	statusEl.hidden = false;
+	statusEl.classList.add('visible');
 }
 
 function hideStatus() {
-	statusEl.hidden = true;
+	statusEl.classList.remove('visible');
 	statusEl.textContent = '';
 }
 
@@ -176,6 +218,7 @@ function render() {
 			renderEmpty('Loading bookmarks…');
 		}
 		renderFooter();
+		updateScrollState(listEl);
 		return;
 	}
 
@@ -187,6 +230,18 @@ function render() {
 		renderBookmarks();
 	}
 	renderFooter();
+	updateScrollState(listEl);
+}
+
+// Only enables scrolling (and therefore only lets a scrollbar ever be
+// drawn) when content genuinely doesn't fit in the available space.
+// Relying on the browser's own `overflow-y: auto` heuristic alone can
+// render a scrollbar track inconsistently across OS/scrollbar styles even
+// when nothing needs scrolling, since the fixed-size popup shell (see
+// styles.css) always reserves a generous content area regardless of how
+// much is actually in it.
+function updateScrollState(el) {
+	el.classList.toggle('scrollable', el.scrollHeight > el.clientHeight);
 }
 
 function renderWorkspaces() {
@@ -220,7 +275,7 @@ function renderSections() {
 	}
 
 	backBtn.hidden = false;
-	breadcrumbEl.textContent = `Workspaces / ${workspace.name}`;
+	breadcrumbEl.textContent = workspace.name;
 
 	if (workspace.sections.length === 0) {
 		renderEmpty('No sections in this workspace.');
@@ -250,7 +305,7 @@ function renderBookmarks() {
 	}
 
 	backBtn.hidden = false;
-	breadcrumbEl.textContent = `Workspaces / ${workspace.name} / ${section.name}`;
+	breadcrumbEl.textContent = `${workspace.name} / ${section.name}`;
 
 	if (section.bookmarks.length === 0) {
 		renderEmpty('No bookmarks in this section.');
@@ -265,7 +320,7 @@ function renderBookmarks() {
 			label: bookmark.name,
 			title: tooltipParts.join('\n'),
 			onClick: () => openBookmark(bookmark),
-			infoOnClick: bookmark.id ? () => openDetails(bookmark.id) : undefined,
+			infoOnClick: () => openDetails(bookmark),
 			hasNotes: Boolean(bookmark.notes && bookmark.notes.trim())
 		});
 		listEl.appendChild(row);
@@ -281,19 +336,32 @@ async function openBookmark(bookmark) {
 	window.close();
 }
 
-function openDetails(bookmarkId) {
-	chrome.windows.create({
-		url: `details.html?id=${encodeURIComponent(bookmarkId)}`,
-		type: 'popup',
-		width: 420,
-		height: 560
-	});
+function openDetails(bookmark) {
+	detailsNameEl.textContent = bookmark.name;
+
+	detailsUrlEl.replaceChildren();
+	if (isSafeUrl(bookmark.url)) {
+		const link = document.createElement('a');
+		link.href = bookmark.url;
+		link.textContent = bookmark.url;
+		link.target = '_blank';
+		link.rel = 'noopener noreferrer';
+		detailsUrlEl.appendChild(link);
+	} else {
+		detailsUrlEl.textContent = bookmark.url;
+	}
+
+	const hasNotes = Boolean(bookmark.notes && bookmark.notes.trim());
+	detailsNotesLabelEl.hidden = !hasNotes;
+	detailsNotesEl.hidden = !hasNotes;
+	detailsNotesEl.textContent = hasNotes ? bookmark.notes : '';
+
+	detailsFooterTextEl.textContent = `Last updated: ${formatTimestamp(lastUpdated)}`;
+
+	updateScrollState(detailsBodyEl);
+	sliderEl.classList.add('show-details');
 }
 
 function renderFooter() {
-	if (view.level === 'workspaces') {
-		footerEl.textContent = `Last updated: ${formatTimestamp(lastUpdated)}`;
-	} else {
-		footerEl.textContent = '';
-	}
+	footerTextEl.textContent = `Last updated: ${formatTimestamp(lastUpdated)}`;
 }

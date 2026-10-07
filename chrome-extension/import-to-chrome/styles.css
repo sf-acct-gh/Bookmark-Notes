@@ -1,0 +1,356 @@
+* {
+	box-sizing: border-box;
+}
+
+:root {
+	/* Single source of truth for the popup's width — referenced by body,
+	   .viewport, .panel, .slider (double this), and the show-details
+	   slide transform (negative this). Chrome's hard popup width maximum
+	   is 800px; keep meaningful headroom below it for browser zoom (which
+	   shrinks the usable CSS-px budget — see the height comment below for
+	   the same constraint on that axis). */
+	--panel-width: 460px;
+
+	/* Light theme (default). Dark overrides are in the [data-theme='dark']
+	   block below — popup.js sets that attribute on <html> from the
+	   persisted chrome.storage.local colorScheme preference. */
+	--bg: #ffffff;
+	--header-bg: #f9fafb;
+	--text: #1f2937;
+	--text-muted: #6b7280;
+	--text-faint: #9ca3af;
+	--border: #e5e7eb;
+	--hover-bg: #e5e7eb;
+	--row-hover-bg: #f3f4f6;
+	--popup-border: none;
+}
+
+[data-theme='dark'] {
+	--bg: #111827;
+	--header-bg: #1f2937;
+	--text: #f3f4f6;
+	--text-muted: #9ca3af;
+	--text-faint: #6b7280;
+	--border: #374151;
+	--hover-bg: #374151;
+	--row-hover-bg: #1f2937;
+	/* A dark popup can otherwise blend into a dark page behind it with no
+	   visible edge — light mode's border comes from Chrome's own native
+	   popup frame and already looks fine, but that's not reliably visible
+	   against a dark host page, so draw our own explicit border here. */
+	--popup-border: 2px solid #ffffff;
+}
+
+/* Prevent the outer document itself from ever being scrollable. Without
+   this, if the real native popup window's actual content area ends up
+   even a few px shorter than .viewport's fixed height (Chrome doesn't
+   necessarily grant back exactly the pixel size requested), html/body
+   would overflow and the browser would draw its own outer window-level
+   scrollbar — stacked on top of .list's/.details-body's own deliberate
+   inner one, producing a double scrollbar. */
+html {
+	overflow: hidden;
+}
+
+body {
+	margin: 0;
+	width: var(--panel-width);
+	overflow: hidden;
+	font: 14px/1.4 system-ui, sans-serif;
+	color: var(--text);
+	background: var(--bg);
+	border: var(--popup-border);
+}
+
+/*
+ * The popup's total height is fixed (not just capped) for two combined
+ * reasons:
+ *
+ * 1. Chrome sizes extension popups to match their rendered content, and
+ *    reliably grows the popup when content gets taller but does NOT
+ *    reliably shrink it back down afterward (a long-standing Chromium/
+ *    Firefox quirk, not something fixable from inside the page) — leaving
+ *    stale leftover rendering ("residue") and hover-triggered flicker in
+ *    the gap. The fix is to never let the overall document height change
+ *    across views at all: a fixed-height shell with each view's variable
+ *    content scrolling inside it, rather than the document's natural
+ *    height varying per view.
+ *
+ * 2. Chrome enforces a HARD, non-negotiable maximum popup size of 800x600
+ *    CSS px — this is enforced by Chrome itself, outside our document
+ *    entirely, and no CSS here can change or detect it. If the popup's
+ *    content wants to be taller than 600px, Chrome wraps the *entire*
+ *    popup (our whole document, header included) in its own native
+ *    scroll container we have no access to — which is a SEPARATE outer
+ *    scrollbar stacked on top of any inner one we create ourselves, i.e.
+ *    a double scrollbar. This height is kept safely under that 600px
+ *    ceiling (with headroom for browser zoom, which shrinks the usable
+ *    budget) specifically to make sure we never trigger it.
+ */
+.viewport {
+	width: var(--panel-width);
+	height: 560px;
+	overflow: hidden;
+}
+
+.slider {
+	display: flex;
+	width: calc(var(--panel-width) * 2);
+	height: 100%;
+	transition: transform 0.2s ease;
+}
+
+.slider.show-details {
+	transform: translateX(calc(var(--panel-width) * -1));
+}
+
+.panel {
+	width: var(--panel-width);
+	height: 100%;
+	flex-shrink: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* overflow-y starts hidden and only switches to auto (via popup.js's
+   updateScrollState) once content is actually measured to overflow — see
+   the comment on .list below for why. */
+.details-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: 0.75rem;
+	overflow-y: hidden;
+}
+
+.details-body.scrollable {
+	overflow-y: auto;
+}
+
+.details-body h2 {
+	font-size: 1rem;
+	margin: 0 0 0.5rem;
+	word-break: break-word;
+}
+
+.details-body .field-label {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	margin: 0.75rem 0 0.15rem;
+}
+
+.details-body .field-value {
+	word-break: break-word;
+	white-space: pre-wrap;
+}
+
+.details-body .field-value a {
+	color: inherit;
+}
+
+.bar {
+	flex-shrink: 0;
+	height: 44px;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0 0.6rem;
+	border-bottom: 1px solid var(--border);
+	background: var(--header-bg);
+}
+
+.breadcrumb {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-weight: 600;
+}
+
+.back-btn,
+.refresh-btn {
+	flex-shrink: 0;
+	border: none;
+	background: none;
+	font-size: 1rem;
+	line-height: 1;
+	padding: 0.25rem 0.4rem;
+	cursor: pointer;
+	border-radius: 4px;
+	color: var(--text);
+}
+
+.back-btn:hover,
+.refresh-btn:hover {
+	background: var(--hover-bg);
+}
+
+/* Collapses to zero height when inactive (unlike .footer, which always
+   has real content now) — safe to do because .list's flex:1 just absorbs
+   the difference, and the document's *overall* fixed height (the thing
+   that actually mattered for the resize bug — see .viewport) is pinned by
+   .panel/.viewport/body regardless of how .bar/.status/.list/.footer
+   divide up the space internally. Reserving this unconditionally made for
+   an oversized, awkward-looking gap above the list on every view, for a
+   message that's only shown for a second or two during a manual refresh. */
+.status {
+	flex-shrink: 0;
+	height: 28px;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 0 0.6rem;
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	text-align: center;
+}
+
+.status.visible {
+	display: flex;
+}
+
+/* overflow-y starts hidden, not auto: the fixed-height popup shell (see
+   .viewport above) always reserves this much vertical space regardless of
+   how many rows are actually in it, so relying on the browser's own
+   overflow-y:auto heuristic alone can draw a scrollbar inconsistently
+   across OS/scrollbar styles even when nothing needs scrolling. popup.js's
+   updateScrollState() measures actual overflow after each render and only
+   then adds .scrollable. */
+.list {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: hidden;
+	padding: 0.25rem 0;
+}
+
+.list.scrollable {
+	overflow-y: auto;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.5rem 0.75rem;
+}
+
+.row-main {
+	flex: 1;
+	min-width: 0;
+	display: block;
+	width: 100%;
+	text-align: left;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	padding: 0;
+	cursor: pointer;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.row:hover {
+	background: var(--row-hover-bg);
+}
+
+.row-arrow {
+	flex-shrink: 0;
+	color: var(--text-faint);
+}
+
+.notes-dot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--text);
+	flex-shrink: 0;
+}
+
+/* Space is always reserved (visibility, not display) so the info button
+   lines up at the same position whether or not a bookmark has notes. */
+.notes-dot.hidden-dot {
+	visibility: hidden;
+}
+
+.row-info-btn {
+	flex-shrink: 0;
+	border: none;
+	background: none;
+	color: var(--text-muted);
+	font-size: 0.95rem;
+	line-height: 1;
+	padding: 0.2rem 0.35rem;
+	cursor: pointer;
+	border-radius: 4px;
+}
+
+.row-info-btn:hover {
+	background: var(--hover-bg);
+}
+
+.empty {
+	padding: 1rem 0.75rem;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* Height always reserved, even when empty (sub-views show no footer text)
+   — see the comment on .viewport for why that matters. */
+.footer {
+	flex-shrink: 0;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0 0.75rem;
+	font-size: 0.75rem;
+	color: var(--text-faint);
+	border-top: 1px solid var(--border);
+}
+
+.footer-text {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.theme-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex-shrink: 0;
+}
+
+/* Each circle always shows its own fixed color (not theme variables) so
+   the user can tell which one is "light" and which is "dark" regardless
+   of which mode is currently active. */
+.theme-circle {
+	width: 14px;
+	height: 14px;
+	padding: 0;
+	border-radius: 50%;
+	cursor: pointer;
+	box-sizing: border-box;
+	border: 1px solid #9ca3af;
+}
+
+.theme-circle-light {
+	background: #ffffff;
+}
+
+.theme-circle-dark {
+	background: #1f2937;
+}
+
+.theme-circle.active {
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 2px #3b82f6;
+}
